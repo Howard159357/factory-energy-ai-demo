@@ -150,6 +150,13 @@ and night shifts on weekdays, half the plant on Saturday, maintenance only on Su
 Saturday 750 kW, Sunday 420 kW, and the night base load sits around 500 kW. A good detector must
 stay quiet on this week, and it does: no rule or baseline fires.
 
+<p align="center">
+  <img src="docs/assets/screens/case_s1.webp" width="900"
+       alt="S1: a normal weekday, load inside the forecast band and below the contract">
+</p>
+
+*Overview on Wednesday 6 August: actual load inside the day-ahead band, well under the contract, and no detection markers.*
+
 ### S2 · Everything starts at 08:00
 
 **What happened.** Monday 16 June, after the weekend. At 08:00 sharp the operators switch on all
@@ -167,6 +174,13 @@ NT$6,652 (US$208) for the month. The same surge at 16:00 would cost NT$33,277 (U
 Re-simulating the morning with a staggered start gives 1,142 kW, under the contract, with no
 new equipment.
 
+<p align="center">
+  <img src="docs/assets/screens/case_s2.webp" width="900"
+       alt="S2: ten machines start within three minutes at 08:00">
+</p>
+
+*Anomaly center, evidence for the start-up rule: ten machines jump from standby at 08:00 within three minutes; the dotted line is when the rule fired.*
+
 ### S3 · A three-day heat wave
 
 **What happened.** 22–24 July, afternoons up to 5.5 °C hotter than normal (39.9 °C at the peak).
@@ -180,6 +194,13 @@ ready to pause EV charging.<br>
 **Impact.** Daily peaks of 1,209, 1,263 and 1,267 kW; 21 intervals above the contract, each by
 only 1–17 kW. This is the case a rule cannot catch early and a forecast can.
 
+<p align="center">
+  <img src="docs/assets/screens/case_s3.webp" width="900"
+       alt="S3: chance of exceeding the contract during the heat wave">
+</p>
+
+*Demand page on 23 July: the forecast's chance of exceeding the contract crosses the 50% alarm line from about 14:00, ahead of the afternoon overruns.*
+
 ### S4 · A compressed-air leak
 
 **What happened.** From 1 September a leak opens in the compressed-air network and grows over
@@ -190,6 +211,13 @@ the drift stood out from normal night-to-night noise.<br>
 **What to do.** Walk the air network with an ultrasonic leak detector, fix the leak, then confirm
 the night load is back to normal.<br>
 **Impact.** +18 kW around the clock, about NT$650,000 (US$20,000) a year if it had been left.
+
+<p align="center">
+  <img src="docs/assets/screens/case_s4.webp" width="900"
+       alt="S4: compressor load during the leak, with the baseline detection">
+</p>
+
+*Anomaly center, evidence for the night-load baseline: the compressors' night and weekend load creeps up through September until the alarm on 9 September.*
 
 ### S5 · A reflow oven left on all weekend
 
@@ -204,6 +232,13 @@ checklist.<br>
 **Impact.** 1,556 kWh that weekend against about 346 kWh on a normal one: 4.5 times the energy,
 for no production.
 
+<p align="center">
+  <img src="docs/assets/screens/case_s5.webp" width="900"
+       alt="S5: RF-02 still on late on Saturday, flagged as running outside schedule">
+</p>
+
+*Equipment page on Saturday night: RF-02 is the only reflow oven still drawing power, flagged in red as running outside its schedule.*
+
 ### S8 · A capacitor bank trips
 
 **What happened.** On 3 November at 09:00 the power-factor correction capacitors on the
@@ -215,6 +250,13 @@ at MDB-3.<br>
 **Impact.** The board's power factor fell from 0.96 to 0.84. Taipower adjusts the whole monthly
 bill by 0.1% per point from 80%: at 0.95 or better the bill is 1.5% lower, at 0.84 only 0.4%,
 and below 0.80 a surcharge starts. The extra current also heats cables and transformers.
+
+<p align="center">
+  <img src="docs/assets/screens/case_s8.webp" width="900"
+       alt="S8: single-line diagram with MDB-3 at power factor 0.85">
+</p>
+
+*Single-line diagram on 5 November: MDB-3 (injection moulding) runs at power factor 0.85 while the other boards stay at 0.97–0.98.*
 
 The full scenario definitions are in [docs/scenarios.md](docs/scenarios.md).
 
