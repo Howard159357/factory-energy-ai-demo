@@ -61,7 +61,7 @@ contract.
 </p>
 
 <p align="center">
-  <img src="docs/assets/demo_demand.gif" width="900"
+  <img src="docs/assets/demo_demand.gif" width="100%"
        alt="12-second clip: plant map, overview and demand page during the start-up">
 </p>
 
@@ -91,7 +91,7 @@ of exceeding the contract: 20% raises a warning, 50% an alarm.
 </p>
 
 <p align="center">
-  <img src="docs/assets/demo_forecast.gif" width="900"
+  <img src="docs/assets/demo_forecast.gif" width="100%"
        alt="12-second clip: forecast page and demand warnings during the heat wave">
 </p>
 
@@ -118,7 +118,7 @@ low-severity hints.
 </p>
 
 <p align="center">
-  <img src="docs/assets/demo_anomalies.gif" width="900"
+  <img src="docs/assets/demo_anomalies.gif" width="100%"
        alt="12-second clip: the air leak and the oven left running">
 </p>
 
