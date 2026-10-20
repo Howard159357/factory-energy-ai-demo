@@ -1,0 +1,14 @@
+id: S2
+title: Monday morning simultaneous start
+caption: "08:00, everything starts at once: 1,324 kW, above the contract"
+description: >
+  After the weekend, operators switch on all four injection molders, the three reflow ovens, the
+  wave solder machine, the large chiller and the standby air compressor at 08:00 sharp. The start-up surges overlap and push
+  the 15-minute demand above the contract capacity.
+replay: {start: 2025-06-16T06:00, end: 2025-06-16T11:00}
+events:
+  - type: simultaneous_start
+    at: 2025-06-16T08:00
+    meters: [IM-01, IM-02, IM-03, IM-04, RF-01, RF-02, RF-03, WS-01, CH-02, AC-02]
+what_if:
+  stagger_minutes: 15

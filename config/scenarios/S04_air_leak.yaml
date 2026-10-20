@@ -1,0 +1,13 @@
+id: S4
+title: Compressed-air leak
+caption: "Slow air leak: compressors draw 18 kW more around the clock, caught by the baseline"
+description: >
+  A leak develops in the compressed-air network and grows over three weeks. Compressors run
+  longer, the night and weekend base load creeps upward, and the waste stops after the repair.
+replay: {start: 2025-08-25T00:00, end: 2025-10-06T00:00}
+events:
+  - type: air_leak
+    start: 2025-09-01T06:00
+    full_at: 2025-09-21T06:00
+    repaired_at: 2025-09-29T10:00
+    max_kw: 18

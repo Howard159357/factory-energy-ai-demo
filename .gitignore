@@ -1,0 +1,24 @@
+.env
+.env.*
+*.duckdb
+*.duckdb.wal
+*.db
+*.sqlite
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+coverage.xml
+htmlcov/
+data/*
+!data/.gitkeep
+recordings/raw/
+build/
+dist/
+
+# Demo recordings. The full video, the per-chapter GIFs
+# and the stills are tracked; the per-chapter clips are for LinkedIn only.
+docs/assets/demo_*.mp4
+docs/assets/demo.webm

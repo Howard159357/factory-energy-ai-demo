@@ -1,0 +1,14 @@
+id: S5
+title: Reflow oven left running over the weekend
+caption: "Oven left on all weekend: 4.5x the normal weekend energy"
+description: >
+  Reflow oven RF-02 is left in standby instead of being switched off: it holds temperature all
+  Friday night, is used by the Saturday day shift, and is then left holding again until Monday
+  morning while its line is stopped.
+replay: {start: 2025-10-17T12:00, end: 2025-10-20T12:00}
+events:
+  - type: left_running
+    meter: RF-02
+    start: 2025-10-17T20:30
+    end: 2025-10-20T07:15
+    level: 0.36

@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "factory-energy-ai-demo"
+version = "0.1.0"
+description = "Factory energy command center demo: demand management, AI load forecasting and equipment anomaly detection on a fictional electronics plant."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "dash",
+    "plotly",
+    "duckdb",
+    "pandas",
+    "numpy",
+    "pydantic",
+    "pyyaml",
+    "scikit-learn",
+    "lightgbm",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-cov", "ruff", "mypy", "types-PyYAML"]
+
+[project.scripts]
+factory-energy = "factory_energy.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"factory_energy.dashboard" = ["assets/*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

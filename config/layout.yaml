@@ -1,0 +1,40 @@
+# Where each distribution board sits on the plant-map illustration (dashboard/assets/plant_map).
+# x and y are percentages of the image width and height; label_side says where the label hangs.
+# The illustration is AI-generated and purely decorative; only these anchors carry meaning.
+# Floor plan (camera at the front-left): office block at the front, logistics on the right,
+# SMT in the centre, injection moulding on the left, assembly & test at the back, utilities in
+# the back-left corner. See docs/simulator.md, "Plant layout and process flow".
+image: plant_map.webp
+zones:
+  - {feeder: MDB-1, x: 50, y: 46, label_side: right}     # SMT lines, centre hall
+  - {feeder: MDB-2, x: 61.5, y: 21, label_side: right}   # assembly & test, back centre
+  - {feeder: MDB-3, x: 26, y: 35, label_side: right}     # injection moulding, left hall
+  - {feeder: MDB-4, x: 24.5, y: 25.3, label_side: left}  # chillers, back-left corner
+  - {feeder: MDB-5, x: 34.5, y: 22.2, label_side: right} # compressors, back-left corner
+  - {feeder: MDB-6, x: 45, y: 62.7, label_side: right}   # office block, lobby and server room
+
+# Sub-metered loads: a small status dot each. Positions follow the illustration, not the plant.
+equipment:
+  - {meter: SMT-L1, x: 44, y: 53.3}
+  - {meter: RF-01, x: 46, y: 40}
+  - {meter: SMT-L2, x: 51, y: 54.2}
+  - {meter: RF-02, x: 53, y: 40.4}
+  - {meter: SMT-L3, x: 58, y: 55.1}
+  - {meter: RF-03, x: 59.5, y: 40.9}
+  - {meter: BI-01, x: 44.5, y: 23.6}
+  - {meter: BI-02, x: 52.5, y: 23.6}
+  - {meter: TEST-01, x: 58.5, y: 31.1}
+  - {meter: WS-01, x: 59.5, y: 26.7}
+  - {meter: IM-01, x: 17.5, y: 44.4}
+  - {meter: IM-02, x: 23.5, y: 45.3}
+  - {meter: IM-03, x: 30, y: 46.2}
+  - {meter: IM-04, x: 35.5, y: 47.1}
+  - {meter: CT-01, x: 16, y: 21.8}
+  - {meter: CH-01, x: 22.7, y: 23.3}
+  - {meter: CH-02, x: 24.5, y: 26.7}
+  - {meter: AC-01, x: 32, y: 22.2}
+  - {meter: AC-02, x: 34, y: 22.7}
+  - {meter: AC-03, x: 36, y: 23.1}
+  - {meter: DR-01, x: 28.7, y: 24.4}
+  - {meter: DC-01, x: 72.5, y: 72.9}
+  - {meter: EV-01, x: 55, y: 74.7}

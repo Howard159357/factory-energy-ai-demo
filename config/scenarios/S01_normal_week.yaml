@@ -1,0 +1,8 @@
+id: S1
+title: Normal week
+caption: "Normal week: the baseline"
+description: >
+  Reference week with no incidents: weekday day/overtime/night shifts, a Saturday day shift with
+  half the plant, and a maintenance-only Sunday. Use it as the baseline for every other scenario.
+replay: {start: 2025-08-04T00:00, end: 2025-08-11T00:00}
+events: []

@@ -1,0 +1,13 @@
+id: S3
+title: Heat wave pushes demand toward the limit
+caption: "Heat wave: sustained overruns are warned 30 to 75 minutes ahead"
+description: >
+  A three-day heat wave raises afternoon temperatures well above normal. The chillers run at full
+  load and lose efficiency, and the plant's 15-minute demand approaches and repeatedly exceeds the
+  contract capacity by a small margin on the two hottest afternoons.
+replay: {start: 2025-07-22T00:00, end: 2025-07-25T00:00}
+events:
+  - type: heat_wave
+    start: 2025-07-22
+    days: 3
+    peak_delta_c: 5.5

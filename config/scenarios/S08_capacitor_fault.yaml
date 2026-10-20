@@ -1,0 +1,13 @@
+id: S8
+title: Capacitor bank fault lowers power factor
+caption: "Capacitor bank trips: power factor 0.96 to 0.84"
+description: >
+  The power-factor correction capacitor bank on the injection-molding feeder trips. Reactive power
+  is no longer compensated and the feeder power factor drops until maintenance repairs it.
+replay: {start: 2025-11-03T00:00, end: 2025-11-13T00:00}
+events:
+  - type: capacitor_fault
+    feeder: MDB-3
+    start: 2025-11-03T09:00
+    end: 2025-11-12T16:00
+    compensation: 0.0

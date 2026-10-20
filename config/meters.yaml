@@ -1,0 +1,40 @@
+# Feeder meters (main distribution boards) add up to the plant total.
+# Equipment meters are sub-meters under a feeder and are never added to the plant total.
+feeders:
+  - {meter_id: MDB-1, name: SMT Area, rated_kw: 360}
+  - {meter_id: MDB-2, name: Assembly & Test, rated_kw: 220}
+  - {meter_id: MDB-3, name: Injection Molding, rated_kw: 300}
+  - {meter_id: MDB-4, name: HVAC & Chilled Water, rated_kw: 540}
+  - {meter_id: MDB-5, name: Compressed Air, rated_kw: 230}
+  - {meter_id: MDB-6, name: Facilities & Office, rated_kw: 140}
+
+equipment:
+  # SMT
+  - {meter_id: RF-01, name: Reflow Oven 1, feeder: MDB-1, category: reflow_oven, rated_kw: 70}
+  - {meter_id: RF-02, name: Reflow Oven 2, feeder: MDB-1, category: reflow_oven, rated_kw: 70}
+  - {meter_id: RF-03, name: Reflow Oven 3, feeder: MDB-1, category: reflow_oven, rated_kw: 70}
+  - {meter_id: SMT-L1, name: SMT Line 1 Printer & Placement, feeder: MDB-1, category: smt_line, rated_kw: 18}
+  - {meter_id: SMT-L2, name: SMT Line 2 Printer & Placement, feeder: MDB-1, category: smt_line, rated_kw: 18}
+  - {meter_id: SMT-L3, name: SMT Line 3 Printer & Placement, feeder: MDB-1, category: smt_line, rated_kw: 18}
+  # Assembly & test
+  - {meter_id: BI-01, name: Burn-in Room 1, feeder: MDB-2, category: burn_in, rated_kw: 60}
+  - {meter_id: BI-02, name: Burn-in Room 2, feeder: MDB-2, category: burn_in, rated_kw: 60}
+  - {meter_id: WS-01, name: Wave Soldering Machine, feeder: MDB-2, category: wave_solder, rated_kw: 35}
+  - {meter_id: TEST-01, name: ICT/FCT Test Stations, feeder: MDB-2, category: test_bank, rated_kw: 25}
+  # Injection molding
+  - {meter_id: IM-01, name: Injection Molder 1 (150T), feeder: MDB-3, category: injection_molder, rated_kw: 40}
+  - {meter_id: IM-02, name: Injection Molder 2 (150T), feeder: MDB-3, category: injection_molder, rated_kw: 40}
+  - {meter_id: IM-03, name: Injection Molder 3 (250T), feeder: MDB-3, category: injection_molder, rated_kw: 65}
+  - {meter_id: IM-04, name: Injection Molder 4 (350T), feeder: MDB-3, category: injection_molder, rated_kw: 90}
+  # HVAC
+  - {meter_id: CH-01, name: Chiller 1, feeder: MDB-4, category: chiller, rated_kw: 200}
+  - {meter_id: CH-02, name: Chiller 2 (Large), feeder: MDB-4, category: chiller, rated_kw: 250}
+  - {meter_id: CT-01, name: Cooling Tower & Pumps, feeder: MDB-4, category: cooling_tower, rated_kw: 45}
+  # Compressed air
+  - {meter_id: AC-01, name: Air Compressor 1 (Fixed Speed), feeder: MDB-5, category: air_compressor_fixed, rated_kw: 75}
+  - {meter_id: AC-02, name: Air Compressor 2 (Fixed Speed), feeder: MDB-5, category: air_compressor_fixed, rated_kw: 75}
+  - {meter_id: AC-03, name: Air Compressor 3 (VSD Trim), feeder: MDB-5, category: air_compressor_vsd, rated_kw: 55}
+  - {meter_id: DR-01, name: Refrigerated Air Dryer, feeder: MDB-5, category: air_dryer, rated_kw: 7.5}
+  # Facilities
+  - {meter_id: DC-01, name: Server Room, feeder: MDB-6, category: server_room, rated_kw: 25}
+  - {meter_id: EV-01, name: EV Charging Bank (4 x 7 kW), feeder: MDB-6, category: ev_charger, rated_kw: 28}

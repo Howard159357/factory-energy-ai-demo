@@ -1,0 +1,72 @@
+# DemoTronics is a fictional electronics plant. All names, numbers and data are synthetic.
+plant:
+  name: DemoTronics Electronics Plant
+  timezone: Asia/Taipei
+  description: PCBA (SMT), final assembly & test, and plastic housing injection molding.
+
+data:
+  expected_interval_seconds: 60
+  stale_after_seconds: 180
+
+demand:
+  interval_minutes: 15
+  contract_capacity_kw: 1250
+  warning_ratio: 0.9
+
+dashboard:
+  refresh_seconds: 2
+
+schedule:
+  shifts:
+    - {name: Day, start: "08:00", end: "17:00"}
+    - {name: Overtime, start: "17:00", end: "20:00"}
+    - {name: Night, start: "20:00", end: "08:00"}
+  lunch_break: {start: "12:00", end: "13:00"}
+  saturday: half_plant
+  sunday: maintenance_only
+
+# Demo holiday calendar (plant closed). Dates are illustrative.
+holidays:
+  - {date: 2025-01-01, name: New Year's Day}
+  - {date: 2025-01-27, name: Lunar New Year}
+  - {date: 2025-01-28, name: Lunar New Year}
+  - {date: 2025-01-29, name: Lunar New Year}
+  - {date: 2025-01-30, name: Lunar New Year}
+  - {date: 2025-01-31, name: Lunar New Year}
+  - {date: 2025-02-28, name: Peace Memorial Day}
+  - {date: 2025-04-03, name: Children's Day}
+  - {date: 2025-04-04, name: Tomb Sweeping Day}
+  - {date: 2025-05-01, name: Labor Day}
+  - {date: 2025-05-30, name: Dragon Boat Festival}
+  - {date: 2025-10-06, name: Mid-Autumn Festival}
+  - {date: 2025-10-10, name: National Day}
+  - {date: 2026-01-01, name: New Year's Day}
+  - {date: 2026-02-16, name: Lunar New Year}
+  - {date: 2026-02-17, name: Lunar New Year}
+  - {date: 2026-02-18, name: Lunar New Year}
+  - {date: 2026-02-19, name: Lunar New Year}
+  - {date: 2026-02-20, name: Lunar New Year}
+
+# Tariff used to express impact in money. Structure and unit prices follow Taipower's high-voltage
+# three-segment time-of-use tariff with a fixed peak (tariff table approved 2025-11-17). The demo
+# plant holds only a regular contract (1,250 kW), so every period is judged against it. Prices in
+# NT$ include 5% business tax; the US$ figures use an illustrative exchange rate.
+tariff:
+  name: "Taipower high-voltage three-segment time-of-use, fixed peak (2025-11-17)"
+  currency: "NT$"
+  ntd_per_usd: 32.0
+  summer_start: "05-16"
+  summer_end: "10-15"
+  hours:                           # [start, end) in whole hours; Sundays and the rest are off-peak
+    summer_weekday: {peak: [[16, 22]], half_peak: [[9, 16], [22, 24]]}
+    other_weekday: {half_peak: [[6, 11], [14, 24]]}
+    summer_saturday: {saturday: [[9, 24]]}
+    other_saturday: {saturday: [[6, 11], [14, 24]]}
+  energy_per_kwh:                  # NT$ per kWh
+    summer: {peak: 9.39, half_peak: 5.85, saturday: 2.60, off_peak: 2.53}
+    other: {half_peak: 5.47, saturday: 2.41, off_peak: 2.32}
+  demand_per_kw_month:             # NT$ per kW per month, by contract type
+    summer: {regular: 223.60, half_peak: 166.90, saturday: 44.70, off_peak: 44.70}
+    other: {regular: 166.90, half_peak: 166.90, saturday: 33.30, off_peak: 33.30}
+  exceedance: {band: 0.10, within: 2.0, beyond: 3.0}  # x2 up to 10% over the contract, x3 beyond
+  power_factor: {base: 0.80, step: 0.001, cap: 0.95}  # +/-0.1% of the bill per point from 80%
