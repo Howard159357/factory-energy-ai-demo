@@ -169,7 +169,7 @@ than 40% of their rating within three minutes. It fired at 08:05 and named all t
 burn-in load, pause EV charging, raise the chilled-water setpoint, lower the air pressure).
 Next Monday: start the machines 15 minutes apart.<br>
 **Impact.** 1,324 kW against 1,250 kW. In summer 08:15 is still off-peak under the
-three-segment tariff, so the 74 kW excess is billed at the cheap off-peak contract price:
+three-segment tariff, so the 74.4 kW excess is billed at the cheap off-peak contract price:
 NT$6,652 (US$208) for the month. The same surge at 16:00 would cost NT$33,277 (US$1,040).
 Re-simulating the morning with a staggered start gives 1,142 kW, under the contract, with no
 new equipment.
@@ -431,7 +431,7 @@ pytest
 
 ## Demo video
 
-The full scripted walkthrough, 2 min 40 s, 1920x1080, silent with captions: three chapters,
+The full scripted walkthrough, 2 min 35 s, 1920x1080, silent with captions: three chapters,
 demand management, AI load forecasting and equipment anomalies, each introduced by a title card.
 
 [**▶ Watch docs/assets/demo.mp4**](docs/assets/demo.mp4) (GitHub opens it in its own player)

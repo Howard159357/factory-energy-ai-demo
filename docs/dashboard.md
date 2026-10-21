@@ -69,8 +69,8 @@ regular contract, NT$44.70 / 33.30 for off-peak and Saturday contracts.
 - **Exceedance.** When the month's highest 15-minute demand in a period is above the contract,
   the excess is billed at that period's contract price: **2x up to 10% of the contract, 3x
   beyond**, with no power-factor credit on it. The period matters: the S2 surge at 08:15 on a
-  summer Monday is off-peak, so its 74 kW excess costs 74 x 44.70 x 2 = NT$6,652 (US$208); the
-  same surge at 16:00 would cost 74 x 223.60 x 2 = NT$33,277 (US$1,040).
+  summer Monday is off-peak, so its 74.4 kW excess costs 74.4 x 44.70 x 2 ≈ NT$6,652 (US$208); the
+  same surge at 16:00 would cost 74.4 x 223.60 x 2 ≈ NT$33,277 (US$1,040).
 - **Power factor.** The monthly average power factor adjusts the whole bill by 0.1% per
   percentage point from 80%: a surcharge below 80%, a credit above it, up to 95% (1.5% at most).
   The dashboard's 0.90 rule is an early warning that fires well before any surcharge.
@@ -146,7 +146,7 @@ the same markers. The Anomalies evidence chart never shows readings after the re
 
 The what-if is the hero card at the top. For S2 (staggered start-up) it shows the peak
 15-minute demand falling by 183 kW, from 1,324 to 1,142 kW (below the 1,250 kW contract), and the penalty avoided:
-74 kW excess in the summer off-peak period x NT$44.70 x 2 ≈ **NT$6,652 (US$208) for the month**
+74.4 kW excess in the summer off-peak period x NT$44.70 x 2 ≈ **NT$6,652 (US$208) for the month**
 (simulated). It is computed from the database's own seed and precomputed at start-up.
 
 The load-shed playbook shows "Need to shed X kW", then "covered" or "not enough" depending on
