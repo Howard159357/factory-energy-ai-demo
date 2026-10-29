@@ -381,6 +381,9 @@ plant holds only a regular contract, and the US$ figures use an illustrative NT$
 ## Quick start
 
 ```bash
+git clone https://github.com/Howard159357/factory-energy-ai-demo
+cd factory-energy-ai-demo
+conda env create -f environment.yml && conda activate factory-energy-ai
 python -m factory_energy check-config
 python -m factory_energy simulate --start 2025-01-01 --days 365 --seed 42 --out data/plant.duckdb --force
 # optional: --scenarios all (default) | none | S2,S3

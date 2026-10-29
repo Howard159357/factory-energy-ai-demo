@@ -19,6 +19,6 @@ build/
 dist/
 
 # Demo recordings. The full video, the per-chapter GIFs
-# and the stills are tracked; the per-chapter clips are for LinkedIn only.
+# and the stills are tracked; the per-chapter clips are not.
 docs/assets/demo_*.mp4
 docs/assets/demo.webm
