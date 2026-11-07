@@ -1,6 +1,6 @@
 """The agent loop: plan, call tools until the model answers, check the citations.
 
-Hand-written on purpose (about 150 lines): every model call and tool call is visible, timed,
+Hand-written on purpose (about 250 lines): every model call and tool call is visible, timed,
 traced and permission-checked in code this project owns.
 """
 

@@ -3,6 +3,15 @@
 All data in this project is synthetic; the plant is fictional. The upgrade stages are listed
 in [docs/roadmap.md](docs/roadmap.md).
 
+## v2.0.3 (7 November 2026)
+
+- **More README visuals** (version 2.0.3). "Why it matters" shows the command center's overview
+  at the moment the projected demand goes 79 kW over the contract. The agent loop and the
+  deployment each get a diagram drawn from text (Mermaid). The evaluation section keeps its
+  headline table and cards, adds a chart of how the scores moved with the same model, and puts
+  the detail (per question, other models, inference profile, retrieval) in sections that open
+  on a click; no figures changed.
+
 ## v2.0.2 (7 November 2026)
 
 - **README visuals for the agent** (version 2.0.2). The top image is now the agent in the

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "factory-energy-ai-demo"
-version = "2.0.2"
+version = "2.0.3"
 description = "Factory energy command center demo: demand management, AI load forecasting and equipment anomaly detection on a fictional electronics plant."
 readme = "README.md"
 license = "MIT"

@@ -135,10 +135,20 @@ model, and a read or write permission. There is no free-form SQL: every query is
 **Agent loop.** A hand-written tool-calling loop (about 250 lines in
 `src/factory_energy/agent/loop.py`) rather than a framework, so every model call and tool call
 is visible, timed and permission-checked in code this project owns. The model writes a short
-plan, calls tools (several in parallel if it wants), gets errors back as tool results so it can
+plan, calls tools (several in one step if it wants), gets errors back as tool results so it can
 correct its arguments, and stops at `AGENT_MAX_STEPS`. Citations are checked before the answer
 is returned: `[source: file#heading]` must be a passage this run retrieved and
 `[data: tool]` a tool this run called successfully; anything else is removed and reported.
+
+```mermaid
+flowchart LR
+  q([Question]) --> model[Model: a short plan,<br/>then tool calls or an answer]
+  model -->|tool calls| tools[Tools: several per step,<br/>permission-checked;<br/>writing off by default]
+  tools -->|results, or errors<br/>to correct the arguments| model
+  model -->|answer with<br/>source tags| check[Citation check: only passages<br/>retrieved and tools called<br/>in this run]
+  check --> ans([Answer: every figure<br/>tagged source or data])
+  model -.->|step limit reached| stop([Stops and says so])
+```
 
 **Backends.** `LLM_PROVIDER=openai_compatible` with `LLM_BASE_URL` and `LLM_MODEL` points at
 an OpenAI-compatible server: Strata was used for the laptop results and vLLM for the RTX 4090
@@ -206,7 +216,7 @@ Each answer is a passage with its file, heading path and similarity score, ready
   - `hash` (default): deterministic feature hashing, no download.
   - `onnx`: all-MiniLM-L6-v2 through onnxruntime.
   - `openai_compatible`: an embedding model served by an OpenAI-compatible engine (vLLM on the
-    RTX 4090 has served Qwen3-Embedding-0.6B and bge-m3; results below).
+    RTX 4090 has served Qwen3-Embedding-0.6B and bge-m3; see *Retrieval on its own* below).
   - `local`: a multilingual model copied into a folder by hand, never downloaded. The choices
     are multilingual-e5-small, bge-m3 and nomic-embed-text. Each runs with its own pooling and
     query/passage prefixes through onnxruntime and tokenizers, so no PyTorch is needed. The
@@ -273,7 +283,7 @@ python -m factory_energy eval retrieval
 about 3B parameters active, served by Strata 0.1.45 on an **RTX 3080 laptop GPU (16 GB)**. The
 "APEX-I compact" quantisation is as the model file names it. Reasoning is off. The agent calls
 the server from another PC over Tailscale. These are **indicative laptop numbers**. On the
-RTX 4090 host, three models have run on vLLM (see below)
+RTX 4090 host, three models have run on vLLM (see *Three models on a 24 GB GPU* below)
 ([eval/configs.yaml](eval/configs.yaml)).
 Values are mean ± std across runs. Per-question detail is in
 [eval/results/summary.md](eval/results/summary.md) and
@@ -284,8 +294,7 @@ Values are mean ± std across runs. Per-question detail is in
        alt="Bar chart: task success core 94% to 97%, hard 88% to 93%, citation precision 92/94% to 96/98%, previous version against v2.0 with the same model">
 </p>
 
-*Same model, same laptop GPU: the v2.0 tool and citation changes moved the results, not a bigger
-model.*
+*Same model, same laptop GPU: v2.0 against the version before it.*
 
 | Set (laptop / Strata / Ornith 1.5 / APEX-I compact) | Task success | Answer accuracy | Tool use | Expected source cited | Citation precision | Median / p95 latency | Tool calls / question | Tokens in / out |
 |---|---|---|---|---|---|---|---|---|
@@ -296,6 +305,18 @@ model.*
 | Core, first measured (3 runs, before any fix) | 87% ± 5% | 99% ± 2% | 100% ± 0% | 67% ± 12% | 81% ± 9% | 6.5 s / 22.9 s | 2.5 | 11,526 / 408 |
 | Hard, before the act-limit rule (3 runs, resolver, new X04) | 80% ± 0% | 80% ± 0% | 100% ± 0% | 100% ± 0% | 91% ± 10% | 10.7 s / 20.1 s | 3.3 | 13,294 / 574 |
 | Scripted planner, core (scorer floor) | 8% ± 0% | 8% ± 0% | 40% ± 0% | 90% ± 0% | 100% | 0.0 s | 1.0 | 4,273 / 85 |
+
+<p align="center">
+  <img src="docs/assets/screens/eval_progress.webp" width="900"
+       alt="How the numbers moved, same model: core task success 87% to 94% to 97%, hard 80% to 88% to 93%, as the citation resolver, the act-limit rule and the v2.0 fixes were added">
+</p>
+
+*Same model throughout: the citation resolver, one system-prompt rule and the v2.0 tool fixes
+moved the scores. The details, every miss and the other models are in the sections below; click to
+open.*
+
+<details>
+<summary><b>Definitions, and scores by category and per question</b></summary>
 
 "Final system" means the citation resolver and the act-limit prompt rule (public in the leak
 check), frozen before these runs; no prompt or rule changed after.
@@ -323,6 +344,11 @@ Per question, final system (before v2.0):
 - **Hard (10 runs each):** X01 9/10, X02 10/10, X03 7/10, X04 10/10, X05 10/10, X06 9/10,
   X07 5/10, X08 9/10, X09 9/10, X10 10/10.
 - **Core (5 runs each):** K03 2/5, K06 4/5, K07 2/5, M03 4/5; all other questions 5/5.
+
+</details>
+
+<details>
+<summary><b>What the runs show, and every miss</b></summary>
 
 **What the final runs show**
 
@@ -373,7 +399,10 @@ Per question, final system (before v2.0):
   for "last weekend", so the question measures little. X01 and X06 missed once each.
 - Runs ended at the 8-step limit twice in 125 core answers and never on the hard set.
 
-**How the numbers moved**
+</details>
+
+<details>
+<summary><b>How the numbers moved: each change and its measured effect</b></summary>
 
 The first measured rows are the system before any fix, 3 runs each. Four changes followed. All
 intermediate configurations and their runs remain in
@@ -417,14 +446,17 @@ intermediate configurations and their runs remain in
   [eval/results-hard/summary.md](eval/results-hard/summary.md); the hard baseline above is the
   resolver configuration on the new wording.
 
-**Local model comparison (same laptop, same system)**
+</details>
+
+<details>
+<summary><b>Three more local models on the same laptop</b></summary>
 
 This is an addition; the Ornith 1.5 rows above stay the headline numbers. Three more local
 models ran on the same RTX 3080 laptop (16 GB) and the same Strata server. Each model had a
 65,536-token context, vision off and reasoning off. All four used the same frozen final system
 (citation resolver, act-limit rule), scorer v3 (rescored from v2, no verdict changed), and the
 same repeats: core 25 questions × 5 runs, hard 10 questions × 10 runs. Latency is the agent's end-to-end time in the eval with one
-user, not the engine profile below. The three other models have not been re-run on the v2.0
+user, not the engine profile (see *Inference profile* below). The three other models have not been re-run on the v2.0
 system; the Ornith v2.0 row is there for scale. Values are mean ± std across runs, from
 [eval/results/summary.md](eval/results/summary.md) and
 [eval/results-hard/summary.md](eval/results-hard/summary.md).
@@ -453,7 +485,7 @@ What the data shows:
   0.02, 0.16). So its +8-point core effect, measured on Ornith, was largely compensating for
   Ornith's citation format.
 - **X07 ("last weekend") stays weak for every model:** Ornith 5/10, Qwen3.6 2/10, Gemma 4 0/10,
-  Tiel Coder 6/10. As described above, X07 measures little until the replay clock is set.
+  Tiel Coder 6/10. As noted under *What the runs show*, X07 measures little until the replay clock is set.
 
 Caveats:
 
@@ -464,7 +496,10 @@ Caveats:
 - Each model was run in one quantisation only.
 - These are laptop numbers and are indicative.
 
-**RTX 4090 / vLLM**
+</details>
+
+<details>
+<summary><b>Three models on a 24 GB GPU</b></summary>
 
 Three models ran on an RTX 4090 (24 GB) with vLLM 0.30.0, with the same frozen final system,
 scorer v3 and repeats as the laptop rows. Qwen3.6-27B, the model in the [agent clip](#energy-agent-and-mcp-tools), was run
@@ -516,6 +551,11 @@ Prefix caching off gave the same figures for this short single-prompt test. Unli
 engine, vLLM batches requests, so throughput grows with users. Details in
 [docs/serving.md](docs/serving.md).
 
+</details>
+
+<details>
+<summary><b>Inference profile, and what the first stand-in run caught</b></summary>
+
 **Inference profile (indicative, laptop).** One fixed prompt, streamed, 256 tokens, with 1, 2
 and 4 users starting together ([eval/profile/](eval/profile/laptop-strata-ornith-1.5.md)):
 
@@ -540,6 +580,11 @@ took 3–4 s for a 2,400-token prompt.
   also showed genuine model errors (claiming a tool was missing, quoting a document's figure
   instead of querying).
 
+</details>
+
+<details>
+<summary><b>Retrieval on its own</b></summary>
+
 Retrieval with the default on-premises embedder (no model involved, 10 questions):
 
 | Embedder | hit@1 | hit@3 | hit@5 | MRR |
@@ -555,6 +600,8 @@ widened when the Stage 3 scorer was fixed. The two served embedders were measure
 embedder sends none). With ten questions the default is already near the ceiling, so this
 shows the served embedders work end to end, not that one is better; a harder retrieval set is
 needed for that.
+
+</details>
 
 ## Security
 
@@ -626,6 +673,23 @@ python -m factory_energy eval security --config <name> --profiles off,on
 ## Deployment
 
 The agent runs as an HTTP service; the same image runs under Docker Compose and Kubernetes.
+
+```mermaid
+flowchart LR
+  user([Engineer, script<br/>or MCP client]) -->|"/ask, /tools, /mcp<br/>X-API-Key"| agent
+  subgraph cluster[Kubernetes namespace: restricted Pod Security]
+    agent[Agent API pods<br/>read-only filesystem,<br/>no capabilities, HPA]
+    chroma[(Chroma<br/>plant documents)]
+    db[(Plant database<br/>read-only for the agent)]
+    job[[One-shot Job:<br/>build data, index documents]]
+    agent --> chroma
+    agent --> db
+    job -.-> db
+    job -.-> chroma
+  end
+  agent -->|NetworkPolicy:<br/>only DNS, Chroma, model| llm[(Local model server<br/>on the GPU host)]
+  prom[Prometheus] -.->|/metrics| agent
+```
 
 | Endpoint | Purpose |
 |---|---|
@@ -710,6 +774,15 @@ times** beyond. One bad quarter of an hour sets the penalty for the whole month,
 day matters: the same excess costs five times more in the summer peak (16:00–22:00) than in the
 off-peak morning. So knowing a few minutes earlier is worth real money. The rest is the slow kind
 of waste nobody sees on the bill: a machine left on, an air leak, a tripped capacitor bank.
+
+<p align="center">
+  <img src="docs/assets/screens/overview.webp" width="900"
+       alt="Command center overview at Monday 08:20: alarm, projected 15-minute demand 1,329 kW is 79 kW above the 1,250 kW contract, penalty up to NT$7,068 this month, with the action to shed 79 kW">
+</p>
+
+*Monday 08:20, five minutes into a 15-minute interval: the projected demand is already 79 kW over
+the contract, so the alarm shows the penalty at stake and which loads to shed before the
+interval closes.*
 
 This project shows what an energy team can do with the meter data they already have: watch the
 15-minute demand live, forecast it, catch equipment problems early, and attach a kW, a cost
