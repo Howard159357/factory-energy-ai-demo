@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, agentic]
   pull_request:
 
 permissions:
@@ -24,3 +24,116 @@ jobs:
       - run: mypy src
       - run: pytest -q
       - run: python -m compileall -q src
+
+  eval-smoke:
+    # Build a 49-day synthetic database, index the knowledge base and run the smoke questions
+    # with the scripted backend: proves the evaluation pipeline end to end on every push.
+    runs-on: ubuntu-latest
+    needs: checks
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: python -m factory_energy eval smoke-db
+      - run: python -m factory_energy rag ingest
+      - run: python -m factory_energy eval retrieval
+      - run: python -m factory_energy eval run --config fake --smoke --repeat 1
+        env:
+          FACTORY_ENERGY_DB: data/eval_smoke.duckdb
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eval-smoke-results
+          path: eval/results-smoke/
+
+  manifests:
+    # Kubernetes manifests against the API schemas, and the compose file.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: kubeconform
+        run: |
+          curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz | tar xz
+          kubectl kustomize k8s | ./kubeconform -strict -summary -
+      - run: docker compose config --quiet
+
+  docker:
+    # Build the image and run it the way it is deployed: read-only root filesystem, no
+    # capabilities, unprivileged user. The container builds its own small database and index.
+    runs-on: ubuntu-latest
+    needs: checks
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: factory-energy-agent:local
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Run the container
+        run: |
+          docker volume create agent-data
+          docker run -d --name agent -p 8000:8000 --read-only --tmpfs /tmp --tmpfs /app/logs \
+            --cap-drop ALL --security-opt no-new-privileges:true -v agent-data:/app/data \
+            -e FACTORY_ENERGY_DB=/app/data/eval_smoke.duckdb \
+            factory-energy-agent:local sh -c "python -m factory_energy eval smoke-db --out /app/data/eval_smoke.duckdb && python -m factory_energy rag ingest && python -m factory_energy api serve"
+      - name: Wait until ready, then ask
+        run: |
+          for i in $(seq 1 90); do curl -sf localhost:8000/ready && break; sleep 2; done
+          curl -sf localhost:8000/ready
+          curl -sf -X POST localhost:8000/ask -H "Content-Type: application/json" \
+            -d '{"question": "How long does a reflow oven preheat?"}' | tee answer.json
+          grep -q '"stop_reason":"answer"' answer.json
+          curl -sf localhost:8000/metrics | grep 'agent_runs_total{stop_reason="answer"}'
+          docker inspect --format '{{.State.Health.Status}}' agent
+      - if: always()
+        run: docker logs agent
+
+  kind:
+    # Deploy the manifests to a real (single-node) Kubernetes cluster and query the agent.
+    runs-on: ubuntu-latest
+    needs: [checks, manifests]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: factory-energy-agent:local
+          cache-from: type=gha
+      - uses: helm/kind-action@v1
+        with:
+          cluster_name: factory-energy
+      - name: Deploy
+        run: |
+          kind load docker-image factory-energy-agent:local --name factory-energy
+          kubectl apply -k k8s/
+          kubectl -n factory-energy wait --for=condition=complete job/plant-data --timeout=600s
+          kubectl -n factory-energy rollout status deployment/agent --timeout=300s
+      - name: Query the agent through the Service
+        run: |
+          kubectl -n factory-energy port-forward service/agent 8000:8000 &
+          for i in $(seq 1 30); do curl -sf localhost:8000/ready && break; sleep 2; done
+          curl -sf -X POST localhost:8000/ask -H "Content-Type: application/json" \
+            -d '{"question": "What is the contract capacity?"}' | tee answer.json
+          grep -q '"stop_reason":"answer"' answer.json
+      - if: failure()
+        run: |
+          kubectl -n factory-energy get all,pvc,events
+          kubectl -n factory-energy logs job/plant-data --tail=100 || true
+          kubectl -n factory-energy logs deployment/chroma --tail=100 || true
+          kubectl -n factory-energy logs deployment/chroma --previous --tail=100 || true
+          kubectl -n factory-energy logs deployment/agent --tail=100 || true

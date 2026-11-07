@@ -12,15 +12,8 @@ from dash import html
 from factory_energy.dashboard import theme
 from factory_energy.dashboard.context import Context
 from factory_energy.dashboard.status import Level, TickState
-from factory_energy.energy.tariff import (
-    PERIOD_NAMES,
-    average_rate,
-    exceedance_penalty,
-    money,
-    period_at,
-    power_factor_adjustment,
-    rate_at,
-)
+from factory_energy.energy.impact import impact_text as describe_impact
+from factory_energy.tools.plant import status_of
 
 CENTER = timedelta(minutes=7, seconds=30)  # plot a 15-min interval at its middle
 
@@ -55,30 +48,9 @@ def event_label(event_type: str) -> str:
 
 def impact_text(ctx: Context, row: pd.Series) -> str:
     """One line of money or energy impact per detection, from its stored score."""
-    tariff = ctx.settings.tariff
-    kind, score = str(row.event_type), float(row.score)
-    if kind == "DEMAND_EXCEEDANCE":
-        when = pd.Timestamp(row.start_ts).to_pydatetime()
-        penalty = exceedance_penalty(score, ctx.contract_kw, tariff, when)
-        return (f"Impact: {score - ctx.contract_kw:,.0f} kW over in the "
-                f"{PERIOD_NAMES[period_at(when, tariff)]} period · up to {money(penalty, tariff)}")
-    if kind == "OFF_SCHEDULE_RUNNING":
-        cost = score * rate_at(pd.Timestamp(row.start_ts).to_pydatetime(), tariff)
-        return f"Impact: {score:,.0f} kWh wasted · about {money(cost, tariff)}"
-    if kind == "AIR_LEAK":
-        yearly = score * 24 * 365 * average_rate(tariff)
-        return f"Impact: +{score:,.0f} kW around the clock · about {money(yearly, tariff)}/year"
-    if kind == "SIMULTANEOUS_START":
-        return f"Impact: {int(score)} machines started together"
-    if kind == "LOW_POWER_FACTOR":
-        rule = tariff.power_factor
-        change = power_factor_adjustment(score, tariff)
-        best = -power_factor_adjustment(rule.cap, tariff)
-        effect = (f"surcharge {change:.1%} of the bill" if change > 0
-                  else f"bill credit {-change:.1%} instead of {best:.1%}")
-        return (f"Impact: power factor {score:.2f} · {effect} "
-                f"(surcharge below {rule.base:.2f})")
-    return ""
+    start = pd.Timestamp(row.start_ts).to_pydatetime()
+    return describe_impact(str(row.event_type), float(row.score), start, ctx.contract_kw,
+                           ctx.settings.tariff)
 
 
 def alert_items(ctx: Context, state: TickState, limit: int = 12) -> list[html.Div]:
@@ -173,9 +145,7 @@ def _rgba(hex_color: str, alpha: float) -> str:
 
 
 def equipment_status(kw: float, rated: float) -> str:
-    if kw > 0.2 * rated:
-        return "RUNNING"
-    return "IDLE" if kw > 0.03 * rated else "OFF"
+    return status_of(kw, rated)  # one definition, shared with the agent's status tool
 
 
 def banner(state: TickState) -> html.Div:

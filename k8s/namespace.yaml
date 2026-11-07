@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: factory-energy
+  labels:
+    # Enforce the Kubernetes "restricted" Pod Security Standard for everything in it.
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest

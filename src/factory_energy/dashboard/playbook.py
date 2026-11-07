@@ -23,6 +23,7 @@ class ShedRule:
     share: float  # share of the present load that can be shed within minutes (assumption)
 
 
+# In playbook order (EM-02 "Load-shed playbook", SOP-03 step 2): apply them top to bottom.
 RULES: tuple[ShedRule, ...] = (
     ShedRule("ev_charger", "Pause EV charging", 1.0),
     ShedRule("burn_in", "Delay the next burn-in loading", 0.35),
@@ -41,7 +42,8 @@ class ShedOption:
 
 
 def shed_options(ctx: Context, snapshot: pd.DataFrame) -> list[ShedOption]:
-    """Playbook rows for the present snapshot, merged by action, largest shed first."""
+    """Playbook rows for the present snapshot, merged by action, in playbook order (the order
+    SOP-03 applies them), not by size."""
     meters = ctx.data.meters
     merged: dict[str, tuple[list[str], float, float]] = {}
     for rule in RULES:
@@ -49,7 +51,6 @@ def shed_options(ctx: Context, snapshot: pd.DataFrame) -> list[ShedOption]:
         load = float(snapshot.kw.reindex(ids).fillna(0.0).sum())
         names, total_load, total_shed = merged.get(rule.action, ([], 0.0, 0.0))
         merged[rule.action] = (names + ids, total_load + load, total_shed + load * rule.share)
-    options = [
+    return [
         ShedOption(action, tuple(ids), load, shed) for action, (ids, load, shed) in merged.items()
     ]
-    return sorted(options, key=lambda o: o.shed_kw, reverse=True)

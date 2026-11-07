@@ -1,0 +1,21 @@
+# kubectl apply -k k8s/   (see k8s/README.md for a local kind cluster)
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: factory-energy
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secret.yaml
+  - storage.yaml
+  - chroma.yaml
+  - data-job.yaml
+  - agent.yaml
+  - hpa.yaml
+  - networkpolicy.yaml
+  - vllm-external.yaml
+images:
+  - name: factory-energy-agent
+    newTag: local
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: factory-energy-demo

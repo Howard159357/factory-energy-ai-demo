@@ -52,7 +52,8 @@ def kpis(ctx: Context, state: TickState) -> list[html.Div]:
         theme.kpi("Headroom", f"{ctx.contract_kw - state.projected_kw:,.0f} kW",
                   f"to the {ctx.contract_kw:,.0f} kW contract", tone),
         theme.kpi("Next-hour risk", state.forecast_level.value,
-                  f"{state.p_exceed:.0%} chance of exceeding the contract",
+                  f"{state.p_exceed:.0%} chance of exceeding the contract"
+                  + (f" in {state.risk_interval}" if state.risk_interval else ""),
                   state.forecast_level.tone),
     ]
 

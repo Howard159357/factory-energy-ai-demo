@@ -1,0 +1,12 @@
+# The synthetic plant database is written once by the data job and mounted read-only by the
+# agent. ReadWriteOnce is enough on a single-node cluster such as kind; use ReadWriteMany, or
+# bake the database into a data image, on a multi-node cluster.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: plant-data
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 2Gi

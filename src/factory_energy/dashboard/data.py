@@ -60,6 +60,7 @@ class DashboardData:
     def __init__(self, database: str | Path, contract_kw: float = 0.0) -> None:
         self._contract_kw = contract_kw
         path = Path(database)
+        self.database = path
         if not path.exists():
             raise FileNotFoundError(f"{path} not found; run `build-demo` first")
         self._lock = threading.Lock()

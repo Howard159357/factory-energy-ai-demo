@@ -1,0 +1,42 @@
+# Least privilege on the network: the agent may reach only DNS, Chroma and the model server;
+# Chroma accepts traffic only from the agent and the data job. Enforced by CNIs that support
+# NetworkPolicy (Calico, Cilium); kind's default CNI does not enforce it.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: agent
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: agent}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - ports:
+        - {port: 8000, protocol: TCP}
+  egress:
+    - to:
+        - namespaceSelector: {}
+          podSelector: {matchLabels: {k8s-app: kube-dns}}
+      ports:
+        - {port: 53, protocol: UDP}
+        - {port: 53, protocol: TCP}
+    - to:
+        - podSelector: {matchLabels: {app.kubernetes.io/name: chroma}}
+      ports:
+        - {port: 8000, protocol: TCP}
+    - ports:   # the model server outside the cluster (vllm-external.yaml)
+        - {port: 8000, protocol: TCP}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: chroma
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: chroma}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector: {matchLabels: {app.kubernetes.io/name: agent}}
+        - podSelector: {matchLabels: {app.kubernetes.io/name: plant-data}}
+      ports:
+        - {port: 8000, protocol: TCP}

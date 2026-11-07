@@ -5,9 +5,13 @@ import sys
 from collections import Counter
 from datetime import date
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from factory_energy import __version__
 from factory_energy.config.loader import load_meters, load_settings
+
+if TYPE_CHECKING:
+    from factory_energy.rag.store import KnowledgeStore
 
 
 def _check_config() -> int:
@@ -173,7 +177,59 @@ def _build_demo(args: argparse.Namespace) -> int:
     return 0
 
 
+def _rag_store(rebuild: bool = False) -> KnowledgeStore:
+    from factory_energy.rag.embed import embedder_from
+    from factory_energy.rag.settings import RagSettings
+    from factory_energy.rag.store import KnowledgeStore, drop_collection, open_client
+
+    settings = RagSettings.from_env()
+    embedder = embedder_from(settings)
+    client = open_client(settings)
+    if rebuild:
+        drop_collection(client, settings.collection)
+    return KnowledgeStore(client, embedder, settings.collection)
+
+
+def _rag(args: argparse.Namespace) -> int:
+    from factory_energy.rag.ingest import discover, ingest
+
+    try:
+        store = _rag_store(rebuild=getattr(args, "rebuild", False))
+    except ValueError as error:
+        print(error, file=sys.stderr)
+        return 2
+    if args.rag_command == "ingest":
+        report = ingest(store, discover())
+        print(f"Embedder: {store.embedder.name}  collection: {store.collection_name}")
+        print(f"Added {len(report.added)}, updated {len(report.updated)}, "
+              f"unchanged {len(report.unchanged)}, removed {len(report.removed)} documents; "
+              f"{report.chunks} chunks embedded; {store.count()} chunks in the index")
+        return 0
+    try:
+        passages = store.search(args.query, k=args.k)
+    except ValueError as error:
+        print(error, file=sys.stderr)
+        return 2
+    if not passages:
+        print("No passages (is the index empty? run `rag ingest`)")
+    for rank, passage in enumerate(passages, 1):
+        print(f"\n[{rank}] {passage.score:.3f}  {passage.citation}")
+        snippet = " ".join(passage.text.split())
+        print(f"    {snippet[:300]}{'...' if len(snippet) > 300 else ''}")
+    return 0
+
+
+def _load_env() -> None:
+    """Read the repository's .env, if any; variables already set in the shell win."""
+    from dotenv import load_dotenv
+
+    from factory_energy.paths import ROOT
+
+    load_dotenv(ROOT / ".env", override=False)
+
+
 def main(argv: list[str] | None = None) -> int:
+    _load_env()
     parser = argparse.ArgumentParser(prog="factory-energy", description=__doc__)
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -201,6 +257,17 @@ def main(argv: list[str] | None = None) -> int:
     board.add_argument("--port", type=int, default=8731)
     build = commands.add_parser("build-demo", help="simulate, detect and forecast in one go")
     build.add_argument("--db", default="data/plant.duckdb")
+    rag = commands.add_parser("rag", help="knowledge base: ingest documents, query passages")
+    rag_commands = rag.add_subparsers(dest="rag_command", required=True)
+    rag_ingest = rag_commands.add_parser("ingest", help="index docs/knowledge and project docs")
+    rag_ingest.add_argument("--rebuild", action="store_true", help="drop the index first")
+    rag_query = rag_commands.add_parser("query", help="search the knowledge base")
+    rag_query.add_argument("query")
+    rag_query.add_argument("-k", type=int, default=5, help="passages to return (1-20)")
+    from factory_energy import cli_agent, cli_eval
+
+    cli_agent.add_parsers(commands)
+    cli_eval.add_parsers(commands)
     args = parser.parse_args(argv)
     if args.command == "check-config":
         return _check_config()
@@ -214,6 +281,12 @@ def main(argv: list[str] | None = None) -> int:
         return _dashboard(args)
     if args.command == "build-demo":
         return _build_demo(args)
+    if args.command == "rag":
+        return _rag(args)
+    if args.command in ("agent", "mcp", "api"):
+        return cli_agent.run(args)
+    if args.command == "eval":
+        return cli_eval.run(args)
     parser.error(f"unknown command {args.command}")
     return 2
 

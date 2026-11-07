@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 
 from factory_energy.dashboard.data import INTERVAL, interval_floor
+from factory_energy.energy.demand import running_interval
 from factory_energy.energy.tariff import energy_cost, exceedance_penalty, money
 
 if TYPE_CHECKING:
@@ -45,7 +46,8 @@ class TickState:
     so_far_kw: float
     projected_kw: float
     forecast: pd.DataFrame  # next-hour forecasts issued at the last completed interval
-    p_exceed: float
+    p_exceed: float  # the highest chance over the next-hour intervals
+    p_exceed_at: datetime | None  # start of the interval that chance is for
     peak_3h_kw: float | None  # highest P50 over the next 3 hours
     peak_3h_at: datetime | None
     detections_24h: pd.DataFrame
@@ -65,6 +67,11 @@ class TickState:
         return self.interval_start + INTERVAL
 
     @property
+    def risk_interval(self) -> str:
+        """The interval the next-hour chance is for, e.g. "08:15-08:30" (empty without one)."""
+        return "" if self.p_exceed_at is None else _interval(self.p_exceed_at)
+
+    @property
     def forecast_level(self) -> Level:
         if self.p_exceed >= ALARM_PROBABILITY:
             return Level.ALARM
@@ -73,18 +80,15 @@ class TickState:
 
 def projection(series: pd.DataFrame, minutes: int = INTERVAL_MINUTES) -> tuple[int, float, float]:
     """Demand-controller view of the running interval: (elapsed, average so far, projected)."""
-    if series.empty:
-        return 0, 0.0, 0.0
-    elapsed = len(series)
-    so_far = float(series.kw.mean())
-    current = float(series.kw.iloc[-1])
-    projected = (float(series.kw.sum()) + current * max(minutes - elapsed, 0)) / minutes
-    return elapsed, so_far, projected
+    return running_interval([float(kw) for kw in series.kw], minutes)
 
 
 def compute(ctx: Context, now: datetime) -> TickState:
     data, contract, tariff = ctx.data, ctx.contract_kw, ctx.settings.tariff
-    snapshot = data.snapshot(now)
+    # The latest complete minute: the one the projection holds to the end of the interval,
+    # and the "present load" get_equipment_status reports (the minute stamped `now` has
+    # only just begun).
+    snapshot = data.snapshot(now - timedelta(minutes=1))
     plant_kw = float(snapshot.kw.reindex(data.feeder_ids).fillna(0.0).sum())
     start = interval_floor(now)
     elapsed, so_far, projected = projection(data.plant_series(start, now))
@@ -93,6 +97,8 @@ def compute(ctx: Context, now: datetime) -> TickState:
     ahead = data.next_forecast(now, 180)
     forecast = ahead[ahead.horizon_min <= 60]
     p_exceed = float(forecast.p_exceed.max()) if len(forecast) else 0.0
+    p_exceed_at = (pd.Timestamp(forecast.loc[forecast.p_exceed.idxmax(), "target_ts"])
+                   .to_pydatetime() if len(forecast) else None)
     peak_3h_kw = float(ahead.p50.max()) if len(ahead) else None
     peak_3h_at = (pd.Timestamp(ahead.loc[ahead.p50.idxmax(), "target_ts"]).to_pydatetime()
                   if len(ahead) else None)
@@ -111,12 +117,14 @@ def compute(ctx: Context, now: datetime) -> TickState:
         action = shed_advice(ctx, snapshot, excess)
     elif p_exceed >= ALARM_PROBABILITY:
         level = Level.ALARM
-        headline = f"{p_exceed:.0%} chance of exceeding the contract within the next hour"
+        headline = (f"{p_exceed:.0%} chance of exceeding the contract in "
+                    f"{_interval(p_exceed_at)}, the riskiest interval of the next hour")
         action = shed_advice(ctx, snapshot, float(max(forecast.p90.max() - contract, 0.0)))
     elif p_exceed >= WARNING_PROBABILITY or projected >= ctx.warning_kw:
         level = Level.WARNING
         headline = (f"Projected demand {projected:,.0f} kW ({projected / contract:.0%} of "
-                    f"contract) · {p_exceed:.0%} chance of exceeding it within the hour")
+                    f"contract) · {p_exceed:.0%} chance of exceeding it in "
+                    f"{_interval(p_exceed_at)}")
         action = "Hold non-essential start-ups; be ready to pause EV charging"
     else:
         level = Level.OK
@@ -124,13 +132,17 @@ def compute(ctx: Context, now: datetime) -> TickState:
         action = "No action needed"
     return TickState(
         now, contract, snapshot, plant_kw, start, elapsed, so_far, projected, forecast,
-        p_exceed, peak_3h_kw, peak_3h_at, detections, energy, cost, data.temperature(now),
-        level, headline, action,
+        p_exceed, p_exceed_at, peak_3h_kw, peak_3h_at, detections, energy, cost,
+        data.temperature(now), level, headline, action,
     )
 
 
+def _interval(start: datetime | None) -> str:
+    return "the next hour" if start is None else f"{start:%H:%M}-{start + INTERVAL:%H:%M}"
+
+
 def shed_advice(ctx: Context, snapshot: pd.DataFrame, needed_kw: float) -> str:
-    """Name the first playbook actions that cover the needed reduction."""
+    """Name the playbook actions, in playbook order, that cover the needed reduction."""
     from factory_energy.dashboard.playbook import shed_options
 
     chosen, total = [], 0.0

@@ -22,10 +22,11 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from factory_energy.config.models import EquipmentConfig, MeterCatalog
+from factory_energy.paths import CONFIG_DIR
 from factory_energy.simulator.electrical import CAPACITOR_COMPENSATION
 from factory_energy.simulator.timeline import FloatArray, Timeline, noise, rng_for
 
-SCENARIO_DIR = Path(__file__).resolve().parents[3] / "config" / "scenarios"
+SCENARIO_DIR = CONFIG_DIR / "scenarios"
 PRE_START_OFF_MIN = 180
 
 # category -> (level while off, level while starting up, start-up minutes), as share of rating

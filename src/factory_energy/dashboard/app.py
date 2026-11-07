@@ -9,6 +9,7 @@ from dash import Dash, Input, Output, State, dcc, html, no_update
 from dash import ctx as callback_context
 
 from factory_energy.config.models import FactorySettings, MeterCatalog
+from factory_energy.dashboard import chat
 from factory_energy.dashboard.clock import DEFAULT_SPEED, SPEEDS, ClockState
 from factory_energy.dashboard.context import Context
 from factory_energy.dashboard.data import DashboardData
@@ -79,6 +80,7 @@ def create_app(database: str | Path, settings: FactorySettings, catalog: MeterCa
         html.Div(html.Nav([dcc.Link(p.TITLE, href=p.PATH, id=_nav_id(p)) for p in PAGES]),
                  className="nav"),
         html.Div([html.Div(id="banner"), html.Div(id="page")], className="main"),
+        *chat.stores(), chat.fab(), chat.drawer(),  # outside the page, so it survives navigation
     ], className="shell")
 
     @app.callback(Output("page", "children"),
@@ -139,4 +141,5 @@ def create_app(database: str | Path, settings: FactorySettings, catalog: MeterCa
 
     for page in PAGES:
         page.register(app, context)
+    chat.register(app, context)
     return app

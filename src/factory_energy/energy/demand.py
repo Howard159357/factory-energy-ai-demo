@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from datetime import datetime, timedelta
 from statistics import mean
 
@@ -57,6 +57,19 @@ def partial_demand(
     return MetricResult(
         value, "kW", start, as_of, False, count / minutes, ["DEMAND_WINDOW_IN_PROGRESS"]
     )
+
+
+def running_interval(
+    kw: Sequence[float], minutes: int = INTERVAL_MINUTES
+) -> tuple[int, float, float]:
+    """Demand-controller view of the interval still running, from its minutes so far:
+    (minutes elapsed, average so far, projected). The projection holds the latest minute to the
+    end of the interval. The dashboard alarm and the get_demand tool both use it."""
+    if not kw:
+        return 0, 0.0, 0.0
+    elapsed = len(kw)
+    projected = (sum(kw) + kw[-1] * max(minutes - elapsed, 0)) / minutes
+    return elapsed, sum(kw) / elapsed, projected
 
 
 def peak_demand(windows: Iterable[MetricResult]) -> MetricResult:

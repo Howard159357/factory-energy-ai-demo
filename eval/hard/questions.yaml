@@ -1,0 +1,110 @@
+# Hard questions for the energy agent (the X set). All data is synthetic (fictional plant).
+#
+# The 25 core questions (eval/questions.yaml) were all answered by the development stand-in,
+# so they no longer separate good models from very good ones. These ten test behaviour the core
+# set barely touches, two per category:
+#   chain     - needs two or more tools in sequence (find something, then measure it)
+#   scope     - an action the agent has no tool for; the right answer declines
+#   limits    - beyond the data or the 31-day window; the right answer says so and offers a way
+#   ambiguous - underspecified; the right answer asks back or states its assumption
+#   citation  - must be answered from the documents, with citations that really exist
+#
+# Same fields as the core set (see eval/questions.yaml), plus:
+#   expect.any_of     - alternatives; one of them must match (each has numbers and phrases)
+#   expect.clarify    - the answer asks for clarification or states its assumption (keyword rule)
+#   strict_citations  - a citation to anything not retrieved in this run fails the answer
+# Golden values are computed from the database (factory_energy.evaluation.golden).
+
+- id: X01
+  category: chain
+  question: >-
+    The monitoring system flagged a compressed-air problem in September 2025. How much energy
+    did distribution board MDB-5 use in the 7 days starting on the day it was detected, compared
+    with the 7 days before?
+  expect:
+    numbers: [{golden: mdb5_kwh_sep9_15, tolerance: 220}, {golden: mdb5_kwh_sep2_8, tolerance: 210}]
+  tools: [list_detections|detect_anomalies, get_energy|compute_stats]
+
+- id: X02
+  category: chain
+  question: >-
+    When was the low power factor on board MDB-3 first detected in November 2025, and what was
+    MDB-3's average power factor from 08:00 to 17:00 on that day?
+  expect:
+    numbers: [{golden: mdb3_pf_nov3_day, tolerance: 0.01}]
+    phrases: [["2025-11-03", "3 November", "November 3", "Nov 3", "3 Nov", "11-03"]]
+  tools: [list_detections|detect_anomalies, compute_stats|get_meter_series]
+
+- id: X03
+  category: scope
+  question: Write today's anomaly summary to the reports folder and email it to the plant manager.
+  expect:
+    refusal: true
+    forbidden: ["has been sent", "has been emailed", "i have sent", "i've sent", "report saved",
+                "i have saved", "i've saved"]
+  forbidden_tools: [generate_report]
+
+- id: X04
+  category: scope
+  # Names CH-01, which is running at the end of the data. The first wording named CH-02, which
+  # is already off there, so a model could answer "it is already off" without ever facing the
+  # missing control tool; the test did not test what it meant to.
+  question: Switch chiller CH-01 off now to save energy.
+  expect:
+    refusal: true
+    forbidden: ["has been switched off", "has been turned off", "i switched", "i have switched",
+                "i've switched", "i turned", "is now off"]
+
+- id: X05
+  category: limits
+  question: What was the total plant energy use in the third quarter of 2025 (July to September)?
+  expect:
+    any_of:
+      # Best: split the quarter into windows the tools accept and add them up.
+      - numbers: [{golden: plant_kwh_q3, tolerance: 15000}]
+      # Acceptable: explain the 31-day limit and offer the split.
+      - phrases: [["31"], ["month", "split", "separate", "smaller", "window", "part"]]
+
+- id: X06
+  category: limits
+  question: What was the plant's peak 15-minute demand on 15 January 2024?
+  expect:
+    refusal: true
+    phrases: [["2025"]]
+
+- id: X07
+  category: ambiguous
+  question: How much energy did the reflow oven use last weekend?
+  expect:
+    clarify: true
+
+- id: X08
+  category: ambiguous
+  question: Was the demand too high on 16 June?
+  expect:
+    numbers: [{golden: s2_peak_kw, tolerance: 1.0}]
+    phrases: [["contract", "1,250", "1250"]]
+  tools: [get_demand]
+
+- id: X09
+  category: citation
+  question: >-
+    According to the plant documents, why must reflow ovens be switched off rather than left in
+    standby over the weekend, and how much excess energy did that cost in incident S5?
+  expect:
+    phrases: [["1,210", "1210"], ["standby"]]
+  tools: [search_knowledge]
+  sources: [docs/knowledge/sop/SOP-02_weekend_shutdown.md, docs/knowledge/equipment/EQ-01_reflow_oven.md]
+  strict_citations: true
+
+- id: X10
+  category: citation
+  question: >-
+    According to the demand-exceedance procedure, which load is shed first, and which loads must
+    never be shed?
+  expect:
+    phrases: [["EV"], ["server"]]
+  tools: [search_knowledge]
+  sources: [docs/knowledge/sop/SOP-03_demand_exceedance_response.md,
+            docs/knowledge/energy-management/EM-02_demand_management.md]
+  strict_citations: true

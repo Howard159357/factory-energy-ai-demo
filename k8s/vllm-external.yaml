@@ -1,0 +1,11 @@
+# The model server runs on the GPU host outside the cluster (vLLM on an RTX 4090).
+# Replace the placeholder with that host's DNS name; never commit a real internal host name.
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm
+spec:
+  type: ExternalName
+  externalName: gpu-host.example.invalid
+  ports:
+    - {name: http, port: 8000}

@@ -6,8 +6,7 @@ from typing import Any
 import yaml
 
 from factory_energy.config.models import FactorySettings, MeterCatalog
-
-CONFIG_DIR = Path(__file__).resolve().parents[3] / "config"
+from factory_energy.paths import CONFIG_DIR
 
 
 def _read(path: Path) -> dict[str, Any]:

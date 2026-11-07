@@ -1,0 +1,49 @@
+# One-shot: build the 49-day synthetic database and index the knowledge base into Chroma.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: plant-data
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: plant-data}
+    spec:
+      restartPolicy: OnFailure
+      automountServiceAccountToken: false
+      # No Docker-link style service variables: Kubernetes would inject CHROMA_PORT=tcp://...
+      # for the chroma Service, which Chroma reads as its own (numeric) port setting and crashes.
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: data
+          image: factory-energy-agent
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - python -m factory_energy eval smoke-db --out /app/data/eval_smoke.duckdb && python -m factory_energy rag ingest
+          envFrom:
+            - configMapRef: {name: agent-config}
+          env:
+            - {name: CHROMA_WAIT_SECONDS, value: "300"}   # Chroma may still be starting
+          resources:
+            requests: {cpu: 500m, memory: 1Gi}
+            limits: {cpu: "2", memory: 3Gi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - {name: plant-data, mountPath: /app/data}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: plant-data
+          persistentVolumeClaim: {claimName: plant-data}
+        - name: tmp
+          emptyDir: {}

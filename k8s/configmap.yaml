@@ -1,0 +1,21 @@
+# Non-secret settings. All data is synthetic (fictional plant).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agent-config
+data:
+  FACTORY_ENERGY_DB: /app/data/eval_smoke.duckdb
+  CHROMA_HOST: chroma
+  CHROMA_PORT: "8000"
+  CHROMA_WAIT_SECONDS: "3"       # the agent fails fast; the data job overrides this
+  LLM_PROVIDER: fake              # openai_compatible to use vLLM (see vllm-external.yaml)
+  LLM_BASE_URL: http://vllm:8000/v1
+  LLM_MODEL: ""
+  AGENT_MAX_STEPS: "8"
+  AGENT_MAX_TOOL_CALLS: "16"
+  AGENT_ALLOW_WRITE: "0"
+  AGENT_QUARANTINE: "1"
+  AGENT_OUTPUT_GUARD: "1"
+  MCP_ALLOWED_HOSTS: localhost:8000,127.0.0.1:8000,agent:8000,agent.factory-energy.svc.cluster.local:8000
+  OTEL_EXPORTER_OTLP_ENDPOINT: ""
+  OTEL_SERVICE_NAME: factory-energy-agent

@@ -1,0 +1,89 @@
+# Local deployment: the agent service, a Chroma vector store and a one-shot data job.
+# All data is synthetic (fictional plant). Everything runs on this machine.
+#
+#   docker compose up --build                      # app on http://localhost:8000
+#   docker compose --profile observability up      # + Jaeger UI on http://localhost:16686
+#   docker compose --profile gpu up                # + vLLM on an NVIDIA GPU (Linux or WSL2)
+#
+# The data job builds the 49-day synthetic database (S2 and S3 scenarios) and indexes the
+# knowledge base. For the full year, run `python -m factory_energy build-demo` on the host and
+# mount data/plant.duckdb instead (see the README).
+
+x-agent: &agent
+  build: .
+  image: factory-energy-agent:local
+  environment: &agent-env
+    FACTORY_ENERGY_DB: /app/data/eval_smoke.duckdb
+    CHROMA_HOST: chroma
+    CHROMA_PORT: "8000"
+    LLM_PROVIDER: ${LLM_PROVIDER:-fake}
+    LLM_BASE_URL: ${LLM_BASE_URL:-http://vllm:8000/v1}
+    LLM_MODEL: ${LLM_MODEL:-}
+    API_KEY: ${API_KEY:-}
+    MCP_ALLOWED_HOSTS: localhost:8000,127.0.0.1:8000,app:8000
+    OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+  volumes:
+    - plant-data:/app/data
+  # Sandboxing: read-only root filesystem, no Linux capabilities, no privilege escalation.
+  read_only: true
+  tmpfs:
+    - /tmp
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+
+services:
+  chroma:
+    image: chromadb/chroma:1.5.9
+    environment:
+      ANONYMIZED_TELEMETRY: "FALSE"
+    volumes:
+      - chroma-data:/data
+
+  data:
+    <<: *agent
+    command: ["sh", "-c", "python -m factory_energy eval smoke-db --out /app/data/eval_smoke.duckdb && python -m factory_energy rag ingest"]
+    depends_on: [chroma]  # the client retries until the server answers (CHROMA_WAIT_SECONDS)
+    restart: "no"
+
+  app:
+    <<: *agent
+    ports:
+      - "127.0.0.1:8000:8000"
+    tmpfs:
+      - /tmp
+      - /app/logs
+    depends_on:
+      data:
+        condition: service_completed_successfully
+    deploy:
+      resources:
+        limits: {cpus: "2", memory: 2g}
+
+  jaeger:
+    image: jaegertracing/jaeger:2.22.0
+    profiles: [observability]
+    ports:
+      - "127.0.0.1:16686:16686"
+
+  vllm:
+    image: vllm/vllm-openai:v0.32.0
+    profiles: [gpu]
+    command: >
+      --model ${VLLM_MODEL:-Qwen/Qwen3-8B-AWQ}
+      --served-model-name ${LLM_MODEL:-qwen3-8b}
+      --enable-auto-tool-choice --tool-call-parser hermes
+      --enable-prefix-caching --max-model-len 16384 --gpu-memory-utilization 0.90
+    ports:
+      - "127.0.0.1:8001:8000"
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - {driver: nvidia, count: 1, capabilities: [gpu]}
+
+volumes:
+  plant-data:
+  chroma-data:
+  hf-cache:

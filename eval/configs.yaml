@@ -1,0 +1,155 @@
+﻿# Model settings the evaluation can run. Each entry is a set of environment overrides applied
+# on top of the shell / .env for that run. Host names stay in .env (LLM_BASE_URL), never here.
+#
+# on_prem: true marks configurations that run entirely on the user's machines; only those
+# appear in the README results table. Stand-ins are reported separately, labelled as such.
+
+fake:
+  description: Scripted planner (searches the documents once, quotes the best passage). The scorer's floor.
+  on_prem: true
+  env: {LLM_PROVIDER: fake}
+
+codex-luna-low:
+  description: TEMPORARY stand-in while the GPU host is offline - GPT-6 Luna (low effort) via Codex CLI. Cloud model; not on-premises.
+  on_prem: false
+  env: {LLM_PROVIDER: codex_cli, CODEX_MODEL: gpt-6-luna, CODEX_EFFORT: low}
+
+codex-terra-5.6-low:
+  description: TEMPORARY stand-in while the GPU host is offline - GPT-5.6 Terra (low effort) via Codex CLI. Cloud model; not on-premises.
+  on_prem: false
+  env: {LLM_PROVIDER: codex_cli, CODEX_MODEL: gpt-5.6-terra, CODEX_EFFORT: low}
+
+# On-premises, laptop: Strata (OpenAI-compatible) on an RTX 3080 laptop GPU (16 GB), reached over
+# Tailscale. LLM_BASE_URL and LLM_API_KEY_FILE come from .env. Indicative numbers until the
+# RTX 4090 runs below are done; every table labels them "laptop / Strata / model / quant".
+laptop-strata-ornith-1.5:
+  description: laptop / Strata 0.1.45 / Ornith 1.5 35B-A3B (MoE, ~3B active) / APEX-I compact quant, reasoning off
+  on_prem: true
+  env: {LLM_PROVIDER: openai_compatible, LLM_MODEL: ornith-1.5-35b-a3b-apex-i-compact,
+        LLM_EXTRA_BODY: '{"reasoning_effort": "none"}'}
+
+# Same model and settings, run after the citation resolver was added (agent/citations.py
+# resolves near-miss citations to what the run retrieved). Kept as a separate entry so the
+# original runs above stay as measured; the difference between the two rows is the resolver.
+# Same again after one system-prompt rule was added: the agent says first that it cannot operate
+# equipment, change settings or send messages when asked to (added after X04 failed; the X set is
+# not held out, so 4 unseen requests in eval/spot/ check that it generalises).
+laptop-strata-ornith-1.5-act-rule:
+  description: laptop / Strata 0.1.45 / Ornith 1.5 35B-A3B / APEX-I compact, reasoning off, citation resolver, act-limit prompt rule
+  on_prem: true
+  env: {LLM_PROVIDER: openai_compatible, LLM_MODEL: ornith-1.5-35b-a3b-apex-i-compact,
+        LLM_EXTRA_BODY: '{"reasoning_effort": "none"}'}
+
+# The act-limit sentence made public: the prompt-leak guard no longer counts a verbatim repeat of
+# it as a leak (it is meant to be said to users). Kept apart so the run that showed the
+# regression above stays on record.
+laptop-strata-ornith-1.5-act-rule-public:
+  description: laptop / Strata 0.1.45 / Ornith 1.5 35B-A3B / APEX-I compact, reasoning off, citation resolver, act-limit rule exempt from the leak check
+  on_prem: true
+  env: {LLM_PROVIDER: openai_compatible, LLM_MODEL: ornith-1.5-35b-a3b-apex-i-compact,
+        LLM_EXTRA_BODY: '{"reasoning_effort": "none"}'}
+
+# The final, frozen system (resolver + public act-limit rule), run with more repeats for the
+# headline numbers: core 25 x 5, hard 10 x 10, security 4 profiles. No prompt or rule changes after.
+laptop-strata-ornith-1.5-final:
+  description: laptop / Strata 0.1.45 / Ornith 1.5 35B-A3B / APEX-I compact, reasoning off, final system (citation resolver, act-limit rule)
+  on_prem: true
+  env: {LLM_PROVIDER: openai_compatible, LLM_MODEL: ornith-1.5-35b-a3b-apex-i-compact,
+        LLM_EXTRA_BODY: '{"reasoning_effort": "none"}'}
+
+# Other local models on the same laptop and engine, same final system and settings, for a model
+# comparison. Same repeats as the final Ornith runs (core 25 x 5, hard 10 x 10).
+laptop-strata-qwen3.6-final:
+  description: laptop / Strata / Qwen3.6 35B-A3B (MoE, ~3B active) / UD Q3_K_M, reasoning off, final system
+  on_prem: true
+  env: {LLM_PROVIDER: openai_compatible, LLM_MODEL: qwen3.6-35b-a3b-ud-q3_k_m,
+        LLM_EXTRA_BODY: '{"reasoning_effort": "none"}'}
+
+laptop-strata-gemma-4-final:
+  description: laptop / Strata / Gemma 4 26B-A4B (MoE, ~4B active) / UD Q3_K_M, reasoning off, final system
+  on_prem: true
+  env: {LLM_PROVIDER: openai_compatible, LLM_MODEL: gemma-4-26b-a4b-ud-q3_k_m,
+        LLM_EXTRA_BODY: '{"reasoning_effort": "none"}'}
+
+laptop-strata-tiel-coder-final:
+  description: laptop / Strata / Tiel Coder 35B-A3B (MoE, ~3B active) / UD Q3_K_XL, reasoning off, final system
+  on_prem: true
+  env: {LLM_PROVIDER: openai_compatible, LLM_MODEL: tiel-coder-35b-a3b-ud-q3_k_xl,
+        LLM_EXTRA_BODY: '{"reasoning_effort": "none"}'}
+
+laptop-strata-ornith-1.5-resolver:
+  description: laptop / Strata 0.1.45 / Ornith 1.5 35B-A3B / APEX-I compact, reasoning off, with the citation resolver
+  on_prem: true
+  env: {LLM_PROVIDER: openai_compatible, LLM_MODEL: ornith-1.5-35b-a3b-apex-i-compact,
+        LLM_EXTRA_BODY: '{"reasoning_effort": "none"}'}
+
+# On-premises configurations for vLLM on the RTX 4090 (Nemotron below has run; the last three
+# are older plans). Set LLM_BASE_URL in .env; LLM_MODEL must match the served model name.
+
+# RTX 4090 (24 GB) / vLLM 0.30: Nemotron 3.5 Lightning, served as "lightning" with 32K context and
+# up to 8 sequences at once (fp8 KV cache). Thinking is turned off through the chat template, the
+# vLLM equivalent of reasoning off on the laptop. Same final system and repeats as the laptop runs.
+vllm-4090-nemotron-lightning:
+  description: 4090 / vLLM 0.30 / Nemotron 3.5 Lightning 30B-A3B (hybrid MoE, ~3B active) / NVFP4, thinking off, final system, 32K context
+  on_prem: true
+  env: {LLM_PROVIDER: openai_compatible, LLM_MODEL: lightning,
+        LLM_EXTRA_BODY: '{"chat_template_kwargs": {"enable_thinking": false}}'}
+
+# Same server with thinking on. With thinking off Nemotron mostly narrates "let me search" and stops
+# without calling the tool (smoke 58%); with thinking on it calls tools normally. The output limit
+# is raised so the thinking does not use up the answer's tokens.
+vllm-4090-nemotron-lightning-think:
+  description: 4090 / vLLM 0.30 / Nemotron 3.5 Lightning 30B-A3B (hybrid MoE, ~3B active) / NVFP4, thinking on, final system, 32K context
+  on_prem: true
+  env: {LLM_PROVIDER: openai_compatible, LLM_MODEL: lightning, LLM_MAX_TOKENS: '4096',
+        LLM_EXTRA_BODY: '{"chat_template_kwargs": {"enable_thinking": true}}'}
+# RTX 4090 / vLLM 0.30: Qwen3-8B (dense, FP8) as the floor, same final system and repeats.
+# Reasoning off like the laptop rows, if the model still calls tools that way.
+vllm-4090-qwen3-8b:
+  description: 4090 / vLLM 0.30 / Qwen3-8B (dense) / FP8, thinking off, final system, 32K context
+  on_prem: true
+  env: {LLM_PROVIDER: openai_compatible, LLM_MODEL: qwen3-8b,
+        LLM_EXTRA_BODY: '{"chat_template_kwargs": {"enable_thinking": false}}'}
+
+# RTX 4090 / vLLM 0.30: Qwen3.6-27B (dense weights, hybrid Gated DeltaNet / full attention) in
+# AWQ INT4, run at 16K context. (32K looked 0.1 GiB short on the first start; it fits after a
+# restart, see docs/serving.md, Lesson 5.)
+vllm-4090-qwen3.6-27b:
+  description: 4090 / vLLM 0.30 / Qwen3.6-27B / AWQ INT4, thinking off, final system, 16K context
+  on_prem: true
+  env: {LLM_PROVIDER: openai_compatible, LLM_MODEL: qwen3.6-27b,
+        LLM_EXTRA_BODY: '{"chat_template_kwargs": {"enable_thinking": false}}'}
+
+vllm-muse-glimmer-30b:
+  description: Muse-Glimmer-30B served by vLLM on an RTX 4090
+  on_prem: true
+  env: {LLM_PROVIDER: openai_compatible, LLM_MODEL: muse-glimmer-30b}
+
+vllm-qwen3.6-27b:
+  description: Qwen3.6-27B served by vLLM on an RTX 4090
+  on_prem: true
+  env: {LLM_PROVIDER: openai_compatible, LLM_MODEL: qwen3.6-27b}
+
+vllm-small-8b:
+  description: An 8B-class instruct model served by vLLM on an RTX 4090 (the floor)
+  on_prem: true
+  env: {LLM_PROVIDER: openai_compatible, LLM_MODEL: small-8b}
+
+# v2.0 re-run of the same server and settings after the fixes recorded in the changelog under
+# "Agent answers match the alarm" and "Dashboard and agent tools agree at the alarm" (get_demand
+# interval_in_progress, get_equipment_status kw_now, get_forecast interval_end, the model's working
+# stripped from the answer) and the citation reader for full-width brackets. Kept apart so the
+# pre-fix rows above stay as measured.
+vllm-4090-qwen3.6-27b-v2:
+  description: 4090 / vLLM 0.30 / Qwen3.6-27B / AWQ INT4, thinking off, v2.0 system (tool and citation fixes), 16K context
+  on_prem: true
+  env: {LLM_PROVIDER: openai_compatible, LLM_MODEL: qwen3.6-27b,
+        LLM_EXTRA_BODY: '{"chat_template_kwargs": {"enable_thinking": false}}'}
+
+# v2.0 re-run of the headline laptop configuration (same model, engine and settings as
+# laptop-strata-ornith-1.5-final) after the same tool and citation fixes as the 4090 v2 entry.
+laptop-strata-ornith-1.5-v2:
+  description: laptop / Strata / Ornith 1.5 35B-A3B / APEX-I compact, reasoning off, v2.0 system (tool and citation fixes)
+  on_prem: true
+  env: {LLM_PROVIDER: openai_compatible, LLM_MODEL: ornith-1.5-35b-a3b-apex-i-compact,
+        LLM_EXTRA_BODY: '{"reasoning_effort": "none"}'}

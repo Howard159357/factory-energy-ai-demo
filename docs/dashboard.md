@@ -28,8 +28,8 @@ saying why, and a recommended action.
 | WARNING | P(exceed next hour) >= 20%, or projected demand >= 90% of the contract (1,125 kW) |
 | OK | Otherwise |
 
-The recommended action names the first rows of the load-shed playbook that together cover the
-reduction needed. The banner and the page below it read the same per-instant state, so they never
+The recommended action names the first rows of the load-shed playbook, in playbook order (EV
+charging first, as in SOP-03), that together cover the reduction needed. The banner and the page below it read the same per-instant state, so they never
 disagree. A disclaimer line under it reads: "Internal management alert for dispatch decisions; not
 the utility's official exceedance ruling."
 
@@ -89,7 +89,7 @@ It is used for:
 | Page | What it shows |
 |---|---|
 | Plant map (home, `/`) | An illustration of the fictional plant with live data anchored on each distribution board, a load bar against the contract and a hot-afternoon tint caption; see [Plant map](#plant-map) |
-| Overview (`/overview`) | KPIs (Plant load, 15-min demand (projected), Contract usage, Chance of exceeding within the next hour, Energy today in MWh with the cost in its sub-line, Next 3 h peak (forecast) with the outdoor temperature in its sub-line), actual load against the day-ahead and next-hour forecast bands, the alert list with impact lines, and load by distribution board |
+| Overview (`/overview`) | KPIs (Plant load, 15-min demand (projected), Contract usage, Chance of exceeding (the riskiest interval of the next hour, named in its sub-line), Energy today in MWh with the cost in its sub-line, Next 3 h peak (forecast) with the outdoor temperature in its sub-line), actual load against the day-ahead and next-hour forecast bands, the alert list with impact lines, and load by distribution board |
 | Demand | The what-if hero card, the interval in progress, average so far, headroom and next-hour risk level; 15-minute demand with the next-hour forecast; the load-shed playbook; the exceedance probability over the day; the single-line diagram at the bottom |
 | Equipment | One card per sub-metered load, grouped by distribution board, with live kW, share of rating, 24-hour energy and a status chip |
 | Anomalies | Counts per layer, the table of detections so far, an evidence chart for the selected detection and a details panel with the scores table |
@@ -124,6 +124,57 @@ Every sub-metered load has a small dot at its position in `config/layout.yaml` (
 coloured by state: green running, amber idle, grey off. A load with an open detection gets a
 red pulsing dot and a chip with its id; the reason is shown on its board's label. Hovering a dot
 shows the load's name, kW and state.
+
+### Ask the agent
+
+The energy agent (see the README) is a floating window available on every page: the lightning
+button at the bottom right opens it, and the conversation stays when you move between pages (it
+is kept in the browser session). There is no separate page for it; the link `/agent` opens
+the plant map with the window already open, which is handy for demos.
+
+- **Window.** About a quarter of the screen at the bottom right (26% of the width, 70% of the
+  height), with a frosted-glass background so the page stays visible behind it. ◐ cycles the
+  background between solid, glass (the default) and clear; ⤢ switches to a larger window for
+  long answers. Both choices are kept in the browser.
+
+- **Asking.** Enter sends; Shift+Enter starts a new line. An Enter that confirms a Chinese or
+  Japanese input-method selection is left to the input method. The agent is told which page is
+  open, so "this" or "here" can refer to it, and it sees the last three answered turns, so a
+  follow-up such as "and in July?" works. The browser keeps the last 30 messages.
+- **Example questions.** 💡 beside the input opens a list: three questions for the current page
+  and ten common ones. Picking one puts it in the input to edit or send.
+  ⏱ marks a "right now" question, which switches the replay clock on; 📅 marks a question
+  about a past date, which switches it off (with the clock on, the date would not exist yet).
+- **While it works.** The lightning icon flashes and a status line shows the elapsed time, the
+  step count and the last tool used. **Stop** ends the wait at once and cancels the model call
+  in flight. With the Codex stand-in, the `codex` process tree is killed. With a vLLM or other
+  OpenAI-compatible server, the connection is closed and the server stops generating. The agent
+  makes no further request.
+- **Queue.** At most `AGENT_MAX_CONCURRENT` questions (default 2) use the model at the same
+  time, across all tabs and users. Later questions wait in order, and the status line shows
+  their place ("Waiting for the model · 1 question ahead"). Stop works while waiting too.
+- **Model label.** The header, the working steps and the working footer show the model's name. `CHAT_MODEL_LABEL`
+  replaces it (for example "local model server"), for screen recordings that should not name it.
+- **Working.** Each result keeps the plan and every model and tool request with its timing in a
+  "Working" section, collapsed until it is clicked, so the conversation stays uncluttered. The footer shows the model,
+  the time split between model and tools, and the tokens.
+- **Citations.** Each `[source: ...]` and `[data: ...]` citation becomes a chip. Clicking a
+  source chip shows the document section it points to (read from `docs/knowledge/` only);
+  clicking a data chip shows the tool requests behind the number. Esc closes the popup, then
+  the panel.
+- **Text size.** A− and A+ change the panel's text size (15 to 23 px, 17 px by default); the
+  choice is kept in the browser. ↺ (new chat) clears the conversation.
+
+With **replay clock as now** on (the default), the question is asked at the replay
+time: the agent is told that time, and every tool is cut off at it (`ToolContext.as_of`).
+Demand, energy and series queries end at it, a window that starts after it is refused, only
+detections already raised are listed, only forecasts already issued are used, incident
+scenarios still to come are hidden, and the what-if is available only once its day is over. So
+the agent can be asked "which loads can we shed right now?" in the middle of the S2 start-up
+and answer from what an operator could have known at that minute.
+
+The agent runs in a background thread and the panel polls its progress every half second; the
+dashboard's database is opened read-only for it, with the same guardrails as everywhere else.
 
 ## Single-line diagram
 

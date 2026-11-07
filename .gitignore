@@ -1,5 +1,6 @@
 .env
 .env.*
+!.env.example
 *.duckdb
 *.duckdb.wal
 *.db
@@ -14,6 +15,7 @@ coverage.xml
 htmlcov/
 data/*
 !data/.gitkeep
+models/
 recordings/raw/
 build/
 dist/
@@ -22,3 +24,10 @@ dist/
 # and the stills are tracked; the per-chapter clips are not.
 docs/assets/demo_*.mp4
 docs/assets/demo.webm
+
+# Agent run logs and generated reports
+logs/
+reports/agent/
+
+# Evaluation smoke runs (CI artifacts); full results in eval/results are kept
+eval/results-smoke/

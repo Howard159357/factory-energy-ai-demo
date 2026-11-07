@@ -109,7 +109,11 @@ def test_tick_state_during_the_incident(ctx: Context) -> None:
     quiet = ctx.tick(QUIET)
     assert quiet.level is Level.OK and quiet.cost_today > 0
     options = shed_options(ctx, state.snapshot)
-    assert options and options[0].shed_kw >= options[-1].shed_kw
+    # playbook order (SOP-03 step 2), not largest first: EV charging is paused first
+    assert [o.action for o in options][:2] == ["Pause EV charging",
+                                               "Delay the next burn-in loading"]
+    assert options[0].shed_kw < options[1].shed_kw
+    assert state.action.index("Pause EV charging") < state.action.index("burn-in")
     assert ctx.data.seed == 42 and ctx.whatif("S2") is not None
 
 
@@ -164,3 +168,4 @@ def test_app_builds_with_all_pages(database: Path) -> None:
     app = create_app(database, load_settings(), load_meters())
     assert len(app.callback_map) >= 12
     assert "SYNTHETIC DEMO DATA" in str(app.layout)
+    assert "chat-fab" in str(app.layout) and "chat-input" in str(app.layout)  # on every page

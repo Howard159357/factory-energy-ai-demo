@@ -1,0 +1,25 @@
+{
+  "fingerprint": {
+    "seed": 42,
+    "simulator_version": "1"
+  },
+  "computed_at": "2026-10-23T23:16:08",
+  "values": {
+    "s2_peak_kw": 1324.4109,
+    "s3_intervals_over_contract": 21.0,
+    "plant_kwh_jul_1_7": 110634.5342,
+    "top_feeder_kwh_june": 161643.9522,
+    "rf02_weekend_kwh": 1976.863,
+    "mdb3_pf_nov5_day": 0.8489,
+    "plant_night_base_aug6": 523.4685,
+    "s2_staggered_peak_kw": 1141.5043,
+    "plant_energy_cost_aug_week": 591409.3772,
+    "forecast_pexceed_jul23_1320_pct": 1.9451,
+    "air_leak_kw": 18.0,
+    "mdb4_july_minus_january_kwh": 92941.5648,
+    "mdb5_kwh_sep9_15": 21605.1609,
+    "mdb5_kwh_sep2_8": 20697.2013,
+    "mdb3_pf_nov3_day": 0.8616,
+    "plant_kwh_q3": 1491900.2984
+  }
+}

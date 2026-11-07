@@ -10,13 +10,13 @@ import yaml
 from dash import Dash, Input, Output, html
 from pydantic import BaseModel, ConfigDict, Field
 
-from factory_energy.config.loader import CONFIG_DIR
 from factory_energy.dashboard import theme
 from factory_energy.dashboard.clock import ClockState
 from factory_energy.dashboard.context import Context
 from factory_energy.dashboard.pages.equipment import open_detections
 from factory_energy.dashboard.status import TickState
 from factory_energy.dashboard.widgets import alert_items, equipment_status
+from factory_energy.paths import CONFIG_DIR
 
 PATH = "/"
 TITLE = "Plant map"
