@@ -45,8 +45,8 @@ site; only the anchored numbers mean anything.*
 | Inference on local hardware | One OpenAI-compatible backend; measured on Strata (laptop) and on vLLM (RTX 4090, three models), with a vLLM compose profile and Kubernetes service | Prior work: [16 local models on an RTX 4090 vs cloud](https://github.com/Howard159357/rtx4090-local-vs-cloud-coding-benchmark) |
 | Classical ML and signal processing | Quantile LightGBM forecasting, CUSUM drift, IsolationForest on load fingerprints | [Results at a glance](#results-at-a-glance) |
 
-Not shown yet: a multi-agent layer over the A2A protocol, and the remaining models on the local
-GPU host (one has run; an 8B floor, Qwen3.6-27B and embedding models are still to come).
+Not shown yet: a multi-agent layer over the A2A protocol, designed in
+[docs/multi-agent-design.md](docs/multi-agent-design.md) but not implemented.
 
 ## Architecture
 

@@ -3,7 +3,14 @@
 All data in this project is synthetic; the plant is fictional. The upgrade stages are listed
 in [docs/roadmap.md](docs/roadmap.md).
 
-## Unreleased (branch `agentic`)
+## v2.0.1 (7 November 2026)
+
+- **Documentation only** (version 2.0.1). This changelog's top heading now names the release (it
+  still read as unreleased), and the README's "not shown yet" line no longer lists the models
+  that have since run on the local GPU host; only the multi-agent layer over A2A remains,
+  designed but not built.
+
+## v2.0 (7 November 2026)
 
 ### v2.0 preparation
 
