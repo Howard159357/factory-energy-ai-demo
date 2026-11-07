@@ -3,6 +3,15 @@
 All data in this project is synthetic; the plant is fictional. The upgrade stages are listed
 in [docs/roadmap.md](docs/roadmap.md).
 
+## v2.0.2 (7 November 2026)
+
+- **README visuals for the agent** (version 2.0.2). The top image is now the agent in the
+  command center with a cited SOP passage open, and the plant map moves to the start of the
+  energy analytics. The agent section gets a 19-second clip of one question (GIF, with an MP4
+  link), the evaluation section the exam and results cards, and the security section a planted
+  document beside the answer that did not follow it, and the seven controls that are not the
+  model. All are frames and cards from the recorded demo; the chat shows "local model server".
+
 ## v2.0.1 (7 November 2026)
 
 - **Documentation only** (version 2.0.1). This changelog's top heading now names the release (it

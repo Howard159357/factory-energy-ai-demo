@@ -12,13 +12,16 @@ demand management, load forecasting and equipment anomaly detection.
 > high-voltage three-segment time-of-use tariff, shown as NT$ with a US$ equivalent.
 
 <p align="center">
-  <img src="docs/assets/screens/plant_map.webp" width="900"
-       alt="Plant map: live kW per distribution board on an illustration of the fictional plant during the simultaneous start-up">
+  <img src="docs/assets/screens/agent_cited_sop.webp" width="900"
+       alt="The energy command center with the agent panel open: an answer citing SOP-03, and the cited shed-order passage opened beside it">
 </p>
 
-*The command center during the Monday start-up (scenario S2): every board is red, demand is above
-the contract. The plant illustration is AI-generated from a written brief and depicts no real
-site; only the anchored numbers mean anything.*
+*The agent in the command center at Monday 08:20 (scenario S2): its answer cites SOP-03, and a
+click on the citation opens the passage it came from. The alarm shows the projected demand of the
+interval in progress (1,329 kW); the completed peak interval is 1,324 kW.*
+
+**v2.0:** an agent inside the dashboard, with live tool calls and a source tag on every figure;
+graded by code at 97% (core) and 93% (hard) on a 16 GB laptop GPU ([evaluation](#agent-evaluation)).
 
 **Agentic system:** [What it demonstrates](#what-this-project-demonstrates) ·
 [Architecture](#architecture) · [Quick start](#quick-start) ·
@@ -157,6 +160,14 @@ citation chip opens the passage or tool request it points to, and the replay clo
 every tool is cut off at that minute, so the agent can be questioned in the middle of an
 incident without seeing what happens next ([docs/dashboard.md](docs/dashboard.md#ask-the-agent)).
 
+<p align="center">
+  <a href="docs/assets/agent_clip.mp4"><img src="docs/assets/agent_clip.gif" width="900"
+       alt="The agent panel answering which load to shed first: its plan, document searches and an equipment status call, then an answer with a source tag on every figure"></a>
+</p>
+
+*One question, live (waits for the model shown 4x faster): the plan, the tool calls in the
+"Working" section, and the answer with its source tags. [Full-quality clip](docs/assets/agent_clip.mp4).*
+
 **MCP.** The same registry is served over the Model Context Protocol with the official Python
 SDK. The plant database is opened read-only, write-class tools are neither listed nor callable
 unless enabled, tools carry read-only hints, and `MCP_TOOLS` narrows the set further. Any MCP
@@ -216,6 +227,11 @@ power factor, forecast, what-if), 7 from the documents, 5 that need several tool
 decline (delete data, predict 2030, reveal its instructions). Each question states the expected
 numbers, phrases, tools and sources.
 
+<p align="center">
+  <img src="docs/assets/screens/eval_exam.webp" width="900"
+       alt="Exam card: 25 core questions (10 numeric, 7 document, 5 multi-tool, 3 refuse) run 5 times, 10 hard questions run 10 times; golden answers from SQL and the simulator; a pass needs all four checks">
+</p>
+
 - **Golden answers are computed from the simulated data**, by SQL on the raw minute readings
   and by re-running the simulator for the what-if, never through the agent's own tools
   (`eval golden`, stored in [eval/golden.json](eval/golden.json) with the dataset's seed and
@@ -262,6 +278,14 @@ RTX 4090 host, three models have run on vLLM (see below)
 Values are mean ± std across runs. Per-question detail is in
 [eval/results/summary.md](eval/results/summary.md) and
 [eval/results-hard/summary.md](eval/results-hard/summary.md).
+
+<p align="center">
+  <img src="docs/assets/screens/eval_results.webp" width="900"
+       alt="Bar chart: task success core 94% to 97%, hard 88% to 93%, citation precision 92/94% to 96/98%, previous version against v2.0 with the same model">
+</p>
+
+*Same model, same laptop GPU: the v2.0 tool and citation changes moved the results, not a bigger
+model.*
 
 | Set (laptop / Strata / Ornith 1.5 / APEX-I compact) | Task success | Answer accuracy | Tool use | Expected source cited | Citation precision | Median / p95 latency | Tool calls / question | Tokens in / out |
 |---|---|---|---|---|---|---|---|---|
@@ -443,7 +467,7 @@ Caveats:
 **RTX 4090 / vLLM**
 
 Three models ran on an RTX 4090 (24 GB) with vLLM 0.30.0, with the same frozen final system,
-scorer v3 and repeats as the laptop rows. Qwen3.6-27B, the model in the agent clip, was run
+scorer v3 and repeats as the laptop rows. Qwen3.6-27B, the model in the [agent clip](#energy-agent-and-mcp-tools), was run
 again on the v2.0 system (its second row); the other two keep their final-system numbers.
 Setup and lessons are in [docs/serving.md](docs/serving.md).
 
@@ -546,6 +570,14 @@ treats tool text as data; a tool-call budget; an output guard for secrets, exter
 system-prompt leaks; citation checking; a least-privilege MCP server. Every block is logged as a
 security event in the run log and the trace.
 
+<p align="center">
+  <img src="docs/assets/screens/security_planted.webp" width="900"
+       alt="The agent answers from a planted SOP; the cited passage, outlined in red, contains the injected instruction, and the answer did not follow it">
+</p>
+
+*One of the 18 planted documents, added to the knowledge base for the recording: the instruction
+is in the cited passage (outlined), and the answer has no token and no system prompt.*
+
 Interception rate (1 - breached / delivered attacks):
 
 | Model | Defences | Design set (12) | Held-out set (6) |
@@ -585,6 +617,11 @@ Interception rate (1 - breached / delivered attacks):
 python -m pytest security                                        # gullible model, 4 profiles, CI
 python -m factory_energy eval security --config <name> --profiles off,on
 ```
+
+<p align="center">
+  <img src="docs/assets/screens/security_layers.webp" width="900"
+       alt="Seven controls that are not the model: read-only data, write tool off, quarantine, step budget, output guard, citation check, security events; and why the held-out figure is 83%">
+</p>
 
 ## Deployment
 
@@ -653,6 +690,15 @@ A 49-day database for CI and quick experiments: `python -m factory_energy eval s
 ---
 
 *The energy analytics: what the agent's tools are built on.*
+
+<p align="center">
+  <img src="docs/assets/screens/plant_map.webp" width="900"
+       alt="Plant map: live kW per distribution board on an illustration of the fictional plant during the simultaneous start-up">
+</p>
+
+*The command center during the Monday start-up (scenario S2): every board is red, demand is above
+the contract. The plant illustration is AI-generated from a written brief and depicts no real
+site; only the anchored numbers mean anything.*
 
 ## Why it matters
 
