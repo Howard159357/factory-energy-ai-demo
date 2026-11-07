@@ -11,7 +11,7 @@
 | P4c | Deferred forecasting items: extra lag/volatility features, 7-day cost strip | planned |
 | P5 | Dashboard (7 pages) with simulated-clock scenario replay | done |
 | P5b | Plant map home page (illustration with live anchors) and single-line diagram on the Demand page | done |
-| P6 | Scripted demo recording, title cards, README GIFs, demo video, social preview | done |
+| P6 | Scripted demo recording, title cards, README animations, demo video, social preview | done |
 | P7 | Optional: remaining scenarios, AI shift summary, hosted demo | planned |
 | A1 | Knowledge base: generated plant documents, chunking, embeddings, Chroma, cited search | done |
 | A2 | Agent: typed tools with permissions, MCP server, tool-calling loop, OpenTelemetry tracing | done |

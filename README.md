@@ -58,7 +58,7 @@ flowchart LR
   client([User or MCP client<br/>Claude Code, Codex CLI]) -->|POST /ask| api[FastAPI service<br/>health, ready, metrics]
   client -->|MCP stdio or HTTP| mcp[MCP server]
   api --> agent[Agent loop<br/>plan, tool calls,<br/>citation check, guardrails]
-  agent -->|OpenAI-compatible API| llm[(OpenAI-compatible engine:<br/>Strata and vLLM measured)]
+  agent -->|OpenAI-compatible API| llm[(Local model server<br/>on the GPU host)]
   agent --> tools[Tool registry<br/>12 typed tools,<br/>read/write permissions]
   mcp --> tools
   tools --> rag[(Chroma<br/>plant documents)]
@@ -204,6 +204,15 @@ python -m factory_energy rag query "what does the weekend shutdown checklist say
 
 Each answer is a passage with its file, heading path and similarity score, ready to cite
 (`docs/knowledge/sop/SOP-02_weekend_shutdown.md#SOP-02 Weekend Shutdown > Purpose`).
+
+```mermaid
+flowchart LR
+  docs[25 Markdown<br/>plant documents] --> chunk[Split on headings<br/>about 400-token windows]
+  chunk --> emb[Embed on-premises<br/>no cloud service]
+  emb --> store[(Chroma<br/>re-indexed only<br/>when a file changes)]
+  q([Agent's search]) --> store
+  store --> cite["Passage cited as<br/>[source: file#heading]"]
+```
 
 - **Chunking** splits Markdown on headings, so a chunk never spans two sections and carries its
   heading path; long sections become about 400-token windows with 15% overlap. PDFs are chunked
@@ -817,7 +826,7 @@ contract.
 </p>
 
 <p align="center">
-  <img src="docs/assets/demo_demand.gif" width="100%"
+  <img src="docs/assets/demo_demand.webp" width="100%"
        alt="12-second clip: plant map, overview and demand page during the start-up">
 </p>
 
@@ -847,7 +856,7 @@ of exceeding the contract: 20% raises a warning, 50% an alarm.
 </p>
 
 <p align="center">
-  <img src="docs/assets/demo_forecast.gif" width="100%"
+  <img src="docs/assets/demo_forecast.webp" width="100%"
        alt="12-second clip: forecast page and demand warnings during the heat wave">
 </p>
 
@@ -874,7 +883,7 @@ low-severity hints.
 </p>
 
 <p align="center">
-  <img src="docs/assets/demo_anomalies.gif" width="100%"
+  <img src="docs/assets/demo_anomalies.webp" width="100%"
        alt="12-second clip: the air leak and the oven left running">
 </p>
 
@@ -1072,6 +1081,14 @@ on real meter data from a working plant the same approach reached a WAPE of abou
 | MDB-5 | Compressed Air | 2 fixed-speed + 1 VSD compressor, air dryer |
 | MDB-6 | Facilities & Office | server room, EV charging bank |
 
+<p align="center">
+  <img src="docs/assets/screens/plant_boards.webp" width="900"
+       alt="Illustration of the fictional plant with the six distribution boards marked: MDB-1 SMT in the centre hall, MDB-2 Assembly and Test at the back, MDB-3 Injection Molding on the left, MDB-4 HVAC and Chilled Water and MDB-5 Compressed Air in the back-left corner, MDB-6 Facilities and Office at the front">
+</p>
+
+*Where each board sits, using the same anchors as the dashboard's plant map
+([config/layout.yaml](config/layout.yaml)); the illustration itself is decorative.*
+
 Contract capacity is **1,250 kW** on a 15-minute demand interval. The six feeders add up to the
 plant total; the 23 equipment sub-meters are used for drill-down and anomaly detection. The areas
 are laid out along the material flow (receiving, SMT and moulding, assembly and test, shipping,
@@ -1192,7 +1209,7 @@ demand management, AI load forecasting and equipment anomalies, each introduced 
 [**▶ Watch docs/assets/demo.mp4**](docs/assets/demo.mp4) (GitHub opens it in its own player)
 
 <p align="center">
-  <a href="docs/assets/demo.mp4"><img src="docs/assets/social_preview.png" width="900" alt="Poster frame of the demo video"></a>
+  <a href="docs/assets/demo.mp4"><img src="docs/assets/social_preview.webp" width="900" alt="Poster frame of the demo video"></a>
 </p>
 
 ## License and notices

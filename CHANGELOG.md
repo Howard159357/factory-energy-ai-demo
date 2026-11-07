@@ -3,6 +3,15 @@
 All data in this project is synthetic; the plant is fictional. The upgrade stages are listed
 in [docs/roadmap.md](docs/roadmap.md).
 
+## v2.0.4 (7 November 2026)
+
+- **Lighter README, two more pictures** (version 2.0.4). The three demo animations and the video
+  poster are now WebP (960 and 1280 px wide): the README's images drop from about 19 MB to about
+  9 MB, with the same frames and timing. "The plant" shows the illustration with the six
+  distribution boards marked at the dashboard's anchors, and the knowledge base gets a diagram
+  from document to citation. The architecture diagram names the model server generically. The original GIFs and
+  PNG stay in `docs/assets/`.
+
 ## v2.0.3 (7 November 2026)
 
 - **More README visuals** (version 2.0.3). "Why it matters" shows the command center's overview
